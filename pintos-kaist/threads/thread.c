@@ -45,6 +45,10 @@ static long long idle_ticks;    /* # of timer ticks spent idle. */
 static long long kernel_ticks;  /* # of timer ticks in kernel threads. */
 static long long user_ticks;    /* # of timer ticks in user programs. */
 
+/* sleep list */
+static struct list sleep_list;
+static int64_t next_tick_to_awake;
+
 /* Scheduling. */
 #define TIME_SLICE 4            /* # of timer ticks to give each thread. */
 static unsigned thread_ticks;   /* # of timer ticks since last yield. */
@@ -109,6 +113,9 @@ thread_init (void) {
 	lock_init (&tid_lock);
 	list_init (&ready_list);
 	list_init (&destruction_req);
+
+	/* sleep list init */
+	list_init(&sleep_list);
 
 	/* Set up a thread structure for the running thread. */
 	initial_thread = running_thread ();
@@ -207,6 +214,8 @@ thread_create (const char *name, int priority,
 	/* Add to run queue. */
 	thread_unblock (t);
 
+	/* 여기에 뭔가를 추가하라는데?? */
+
 	return tid;
 }
 
@@ -240,9 +249,17 @@ thread_unblock (struct thread *t) {
 
 	old_level = intr_disable ();
 	ASSERT (t->status == THREAD_BLOCKED);
-	list_push_back (&ready_list, &t->elem);
+	// list_push_back (&ready_list, &t->elem);
+	list_insert_ordered(&ready_list, &t->elem, thread_priority_more, NULL);
 	t->status = THREAD_READY;
 	intr_set_level (old_level);
+}
+
+bool thread_priority_more(const struct list_elem *a,
+                          const struct list_elem *b,
+                          void *aux UNUSED) {
+    return list_entry(a, struct thread, elem)->priority >
+           list_entry(b, struct thread, elem)->priority;
 }
 
 /* Returns the name of the running thread. */
@@ -587,4 +604,51 @@ allocate_tid (void) {
 	lock_release (&tid_lock);
 
 	return tid;
+}
+
+void thread_sleep(int64_t ticks){
+	struct thread *cur;
+	enum intr_level old_level;
+
+	old_level = intr_disable();
+	cur = thread_current();
+
+	ASSERT (cur != idle_thread);
+	ASSERT(cur != NULL);
+	
+	// cur->wakeup_tick = ticks; // 여기가 문제라고하네...
+	update_next_tick_to_awake(cur->wakeup_tick = ticks);
+
+	ASSERT(intr_get_level() == INTR_OFF);
+
+	list_push_back(&sleep_list, &cur->elem);
+	thread_block();
+
+	intr_set_level(old_level);
+}
+
+void thread_awake(int64_t ticks){
+	next_tick_to_awake = INT64_MAX;
+	struct list_elem *e = list_begin(&sleep_list);
+	struct thread *t;
+
+	for (e; e != list_end(&sleep_list);){
+		t = list_entry(e, struct thread, elem);
+		if (t->wakeup_tick <= ticks){
+			// printf("WAKEUP: tick=%lld\n", t->wakeup_tick);
+			e = list_remove(&t->elem);
+			thread_unblock(t);
+		}else{
+			update_next_tick_to_awake(t->wakeup_tick);
+			e = list_next(e);
+		}
+	}
+}
+
+void update_next_tick_to_awake(int64_t ticks){
+	next_tick_to_awake = (next_tick_to_awake > ticks) ? ticks : next_tick_to_awake;
+}
+
+int64_t get_next_tick_to_awake(void){
+	return next_tick_to_awake;
 }

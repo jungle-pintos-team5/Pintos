@@ -1,0 +1,18 @@
+FAIL
+Kernel panic in run: PANIC at ../../threads/interrupt.c:361 in intr_handler(): Unexpected interrupt
+Call stack: 0x80042134ea 0x8004208a61 0x8004208e13 0x8004207b75 0x800420dbd3 0x80042168b0 0x800421680f 0x8004210a36 0x80042166be 0x80042109ed 0x800420d242 0x800420681b 0x80042067dd 0x800420613d
+Translation of call stack:
+0x00000080042134ea: debug_panic (lib/kernel/debug.c:32)
+0x0000008004208a61: intr_handler (threads/interrupt.c:365)
+0x0000008004208e13: intr_entry (threads/intr-stubs.o:?)
+0x0000008004207b75: intr_set_level (threads/interrupt.c:131 (discriminator 1))
+0x000000800420dbd3: vga_putc (devices/vga.c:92)
+0x00000080042168b0: putchar_have_lock (lib/kernel/console.c:177)
+0x000000800421680f: vprintf_helper (lib/kernel/console.c:166)
+0x0000008004210a36: __vprintf (lib/stdio.c:154)
+0x00000080042166be: vprintf (lib/kernel/console.c:123)
+0x00000080042109ed: printf (lib/stdio.c:80)
+0x000000800420d242: timer_print_stats (devices/timer.c:124)
+0x000000800420681b: print_stats (threads/init.c:356)
+0x00000080042067dd: power_off (threads/init.c:347)
+0x000000800420613d: main (threads/init.c:127)
