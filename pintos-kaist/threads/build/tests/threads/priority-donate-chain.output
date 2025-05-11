@@ -10,33 +10,38 @@ Executing 'priority-donate-chain':
 (priority-donate-chain) begin
 (priority-donate-chain) main got lock.
 (priority-donate-chain) main should have priority 3.  Actual priority: 0.
-(priority-donate-chain) main should have priority 6.  Actual priority: 0.
-(priority-donate-chain) thread 2 got lock
-(priority-donate-chain) thread 2 should have priority 21. Actual priority: 6
-(priority-donate-chain) thread 2 finishing with priority 6.
 (priority-donate-chain) interloper 1 finished.
+(priority-donate-chain) main should have priority 6.  Actual priority: 0.
+(priority-donate-chain) interloper 2 finished.
 (priority-donate-chain) main should have priority 9.  Actual priority: 0.
+(priority-donate-chain) interloper 3 finished.
 (priority-donate-chain) main should have priority 12.  Actual priority: 0.
+(priority-donate-chain) interloper 4 finished.
 (priority-donate-chain) main should have priority 15.  Actual priority: 0.
+(priority-donate-chain) interloper 5 finished.
 (priority-donate-chain) main should have priority 18.  Actual priority: 0.
+(priority-donate-chain) interloper 6 finished.
 (priority-donate-chain) main should have priority 21.  Actual priority: 0.
+(priority-donate-chain) interloper 7 finished.
 (priority-donate-chain) main finishing with priority 0.
 (priority-donate-chain) end
 Execution of 'priority-donate-chain' complete.
-Timer: 33 ticks
-Interrupt 0x0d (#GP General Protection Exception) at rip=8004208e6c
- cr2=0000000000200202 error=            4000
+Timer: 37 ticks
+Thread: 0 idle ticks, 38 kernel ticks, 0 user ticks
+Console: 1407 characters output
+Interrupt 0x0d (#GP General Protection Exception) at rip=8004208f21
+ cr2=0000000000000000 error=            4000
 rax 0000000000000000 rbx 0000000000204400 rcx 00000080040b8000 rdx 00000000000003d4
 rsp 0000008004000db8 rbp 0000008004000df0 rsi 000000000000800f rdi 0000000000000001
-rip 0000008004208e6c r8 0000008004000ec8  r9 00000080042167d2 r10 0000000000000000
+rip 0000008004208f21 r8 0000008004000ec8  r9 0000008004216887 r10 0000000000000000
 r11 0000000000000000 r12 0000000000000000 r13 0000000000000000 r14 0000000000000000
 r15 0000000000000000 rflags 00200006
 es: 0010 ds: 0010 cs: 0008 ss: 0010
 Kernel PANIC at ../../threads/interrupt.c:361 in intr_handler(): Unexpected interrupt
-Call stack: 0x80042134ea 0x8004208a61 0x8004208e13 0x8004207b75 0x800420dbd3 0x80042168b0 0x800421680f 0x8004210a36 0x80042166be 0x80042109ed 0x800420d242 0x800420681b 0x80042067dd 0x800420613d.
+Call stack: 0x800421359f 0x8004208b16 0x8004208ec8 0x8004207c2a 0x800420dc88 0x8004216965 0x80042168c4 0x8004210aeb 0x8004216773 0x8004210aa2 0x80042165ec 0x8004206833 0x80042067dd 0x800420613d.
 The `backtrace' program can make call stacks useful.
 Read "Backtraces" in the "Debugging Tools" chapter
 of the Pintos documentation for more information.
-Timer: 34 ticks
-Thread: 0 idle ticks, 34 kernel ticks, 0 user ticks
+Timer: 39 ticks
+Thread: 0 idle ticks, 39 kernel ticks, 0 user ticks
 Console: 2

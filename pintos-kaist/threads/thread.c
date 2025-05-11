@@ -214,7 +214,12 @@ thread_create (const char *name, int priority,
 	/* Add to run queue. */
 	thread_unblock (t);
 
-	/* 여기에 뭔가를 추가하라는데?? */
+	/* compare the priorities of the currently running 
+	thread and the newly inserted one. Yield the CPU 
+	if the newly arriving thread has higher priority*/
+	if(t->priority > thread_current()->priority){
+		thread_yield();
+	}
 
 	return tid;
 }
@@ -320,7 +325,8 @@ thread_yield (void) {
 
 	old_level = intr_disable ();
 	if (curr != idle_thread)
-		list_push_back (&ready_list, &curr->elem);
+		// list_push_back (&ready_list, &curr->elem);
+		list_insert_ordered(&ready_list, &curr->elem, thread_priority_more, NULL);
 	do_schedule (THREAD_READY);
 	intr_set_level (old_level);
 }
@@ -329,6 +335,20 @@ thread_yield (void) {
 void
 thread_set_priority (int new_priority) {
 	thread_current ()->priority = new_priority;
+
+	check_thread_priority();
+}
+
+void check_thread_priority(void){
+	if (list_empty(&ready_list)){
+		return;
+	}
+
+	struct thread *first_th = list_entry(list_front(&ready_list), struct thread, elem);
+
+	if(thread_get_priority() < first_th->priority){
+		thread_yield();
+	}
 }
 
 /* Returns the current thread's priority. */
