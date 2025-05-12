@@ -6,4 +6,4 @@ thread:
 	make clean && \
 	make -j && \
 	cd ./build && \
-	make check
+	make check 2>&1 | tee build_log.txt
