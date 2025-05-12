@@ -1,0 +1,35 @@
+{
+    "configurations": [
+        
+      {
+        "type": "gdb",
+        "request": "attach",
+        "name": "Project1_threads",
+        "executable": "${workspaceFolder}/pintos-kaist-master/threads/build/kernel.o",
+        "target": "localhost:1234",
+        "remote": true,
+        "cwd": "${workspaceFolder}",
+        "valuesFormatting": "parseText"
+      },
+      {
+        "type": "gdb",
+        "request": "attach",
+        "name": "Project2_userprog",
+        "executable": "${workspaceFolder}/pintos-kaist-master/userprog/build/kernel.o",
+        "target": "localhost:1234",
+        "remote": true,
+        "cwd": "${workspaceFolder}",
+        "valuesFormatting": "parseText"
+      },
+      {
+        "type": "gdb",
+        "request": "attach",
+        "name": "Project3_vm",
+        "executable": "${workspaceFolder}/pintos-kaist-master/vm/build/kernel.o",
+        "target": "localhost:1234",
+        "remote": true,
+        "cwd": "${workspaceFolder}",
+        "valuesFormatting": "parseText"
+      }
+    ]
+  }
