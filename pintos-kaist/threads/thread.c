@@ -336,6 +336,10 @@ void
 thread_set_priority (int new_priority) {
 	thread_current ()->priority = new_priority;
 
+	/* priority donation 부분 추가 코드 */
+	thread_current()->original_priority = new_priority;
+	refresh_priority();
+
 	check_thread_priority();
 }
 
@@ -444,7 +448,13 @@ init_thread (struct thread *t, const char *name, int priority) {
 	t->status = THREAD_BLOCKED;
 	strlcpy (t->name, name, sizeof t->name);
 	t->tf.rsp = (uint64_t) t + PGSIZE - sizeof (void *);
+
+	/* priority donation */
+	t->original_priority = priority;
 	t->priority = priority;
+	list_init(&t->donations);
+	t->wait_lock = NULL;
+
 	t->magic = THREAD_MAGIC;
 }
 
@@ -671,4 +681,21 @@ void update_next_tick_to_awake(int64_t ticks){
 
 int64_t get_next_tick_to_awake(void){
 	return next_tick_to_awake;
+}
+
+/* priority donation 부분 코드 추가 */
+void donate_priority(){
+	struct thread *t = thread_current();
+	int priority = t->priority;
+
+	for (int depth = 0; depth < 8; depth++){
+		if(t->wait_lock == NULL){
+			break;
+		}
+
+		t = t->wait_lock->holder;
+		if(priority > t->priority){
+			t->priority = priority;
+		}
+	}
 }

@@ -192,7 +192,17 @@ lock_acquire (struct lock *lock) {
 	ASSERT (!intr_context ());
 	ASSERT (!lock_held_by_current_thread (lock));
 
+	/* priority donation 부분 코드 추가 */
+	struct thread *t = thread_current();
+	if(lock->holder != NULL){
+		t->wait_lock = lock;
+		list_push_back(&lock->holder->donations, &t->donation_elem);
+		// 여기서 락에 우선순위가 가장 높은 스레드의 우선순위를 donation하는 코드 작성
+		donate_priority();
+	}
+
 	sema_down (&lock->semaphore);
+	t->wait_lock = NULL; // 락을 먹었기 때문에 대기 큐에 삽입되지 않는다.
 	lock->holder = thread_current ();
 }
 
@@ -227,7 +237,41 @@ lock_release (struct lock *lock) {
 	ASSERT (lock_held_by_current_thread (lock));
 
 	lock->holder = NULL;
+
+	/* priority donation 추가 부분 */
+	remove_with_lock(lock);
+	refresh_priority();
+
 	sema_up (&lock->semaphore);
+}
+
+void remove_with_lock(struct lock *lock){
+	struct thread *t = thread_current();
+    struct list_elem *curr = list_begin(&t->donations);
+    struct thread *curr_thread = NULL;
+
+    while (curr != list_end(&t->donations)) 
+	{
+        curr_thread = list_entry(curr, struct thread, donation_elem);
+
+        if (curr_thread->wait_lock == lock)
+            list_remove(&curr_thread->donation_elem);
+
+        curr = list_next(curr);
+    }
+}
+
+void refresh_priority(){
+	struct thread *t = thread_current();
+	t->priority = t->original_priority;
+
+	if(!list_empty(&t->donations)){
+		struct list_elem *max_elem = list_max(&t->donations, thread_priority_more, NULL);
+		struct thread *donor = list_entry(max_elem, struct thread, donation_elem);
+		if (donor->priority > t->priority){
+			t->priority = donor->priority;
+		}
+	}
 }
 
 /* Returns true if the current thread holds LOCK, false
