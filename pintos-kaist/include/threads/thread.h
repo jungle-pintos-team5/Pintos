@@ -27,7 +27,10 @@ typedef int tid_t;
 #define PRI_MIN 0                       /* Lowest priority. */
 #define PRI_DEFAULT 31                  /* Default priority. */
 #define PRI_MAX 63                      /* Highest priority. */
-
+#define fp 1<<14
+#define NICE_DEFAULT 0
+#define RECENT_CPU_DEFAULT 0
+#define LOAD_AVG_DEFAULT 0
 /* A kernel thread or user process.
  *
  * Each thread structure is stored in its own 4 kB page.  The
@@ -91,12 +94,16 @@ struct thread {
 	enum thread_status status;          /* Thread state. */
 	char name[16];                      /* Name (for debugging purposes). */
 	int priority;                       /* Priority. */
-	
-	int64_t wake_up_tick;             // 깨울 시간 (timer_tick 기준)
-    struct list_elem sleep_elem;     // sleep list에 들어갈 때 쓰는 요소
+	int opriority;
+	struct lock *wait;
+	struct list donates;
+	struct list_elem delem;
 	/* Shared between thread.c and synch.c. */
 	struct list_elem elem;              /* List element. */
-
+	int64_t wakeup;
+	int nice;
+	int recent_cpu;
+	struct list_elem allelem;
 #ifdef USERPROG
 	/* Owned by userprog/process.c. */
 	uint64_t *pml4;                     /* Page map level 4 */
@@ -144,5 +151,18 @@ int thread_get_recent_cpu (void);
 int thread_get_load_avg (void);
 
 void do_iret (struct intr_frame *tf);
-
+void thread_sleep(int64_t tiks);
+void thread_wakeup(int64_t tiks);
+bool thread_order(struct list_elem *a,struct list_elem *b,void *aux);
+void test_max_priority (void);
+int convert_fixed(int n);
+int convert_int(int x);
+int convert_int_round(int x);
+int get_decay(void);
+void up_recent(void);
+void recal_load(void);
+void recal_recent(struct thread *t);
+void recal_pri(struct thread *vv);
+void all_recal(void);
+void all_recal_r(void);
 #endif /* threads/thread.h */

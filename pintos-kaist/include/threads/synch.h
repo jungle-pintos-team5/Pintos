@@ -37,6 +37,10 @@ void cond_init (struct condition *);
 void cond_wait (struct condition *, struct lock *);
 void cond_signal (struct condition *, struct lock *);
 void cond_broadcast (struct condition *, struct lock *);
+void release_d(struct lock *lock);
+void donate(void);
+void refresh(void);
+bool sepm(const struct list_elem *a,const struct list_elem *b,void *aux);
 
 /* Optimization barrier.
  *

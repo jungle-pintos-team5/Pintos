@@ -7,14 +7,8 @@
 #include "threads/io.h"
 #include "threads/synch.h"
 #include "threads/thread.h"
-#include "threads/thread.h"
-#include "threads/synch.h"
-
-extern struct list ready_list;
-static struct list sleep_list;
 
 /* See [8254] for hardware details of the 8254 timer chip. */
-static bool cmp_wake_tick(const struct list_elem *, const struct list_elem *, void *);
 
 #if TIMER_FREQ < 19
 #error 8254 timer requires TIMER_FREQ >= 19
@@ -30,19 +24,6 @@ static int64_t ticks;
    Initialized by timer_calibrate(). */
 static unsigned loops_per_tick;
 
-static bool
-cmp_wake_tick(const struct list_elem *a,
-              const struct list_elem *b,
-              void *aux UNUSED) {
-    struct thread *ta = list_entry(a, struct thread, sleep_elem);
-    struct thread *tb = list_entry(b, struct thread, sleep_elem);
-
-    if (ta->wake_up_tick == tb->wake_up_tick)
-        return ta->priority > tb->priority;  // 큰 priority 먼저 오게
-
-    return ta->wake_up_tick < tb->wake_up_tick;
-}
-
 static intr_handler_func timer_interrupt;
 static bool too_many_loops (unsigned loops);
 static void busy_wait (int64_t loops);
@@ -56,13 +37,12 @@ timer_init (void) {
 	/* 8254 input frequency divided by TIMER_FREQ, rounded to
 	   nearest. */
 	uint16_t count = (1193180 + TIMER_FREQ / 2) / TIMER_FREQ;
-	
+
 	outb (0x43, 0x34);    /* CW: counter 0, LSB then MSB, mode 2, binary. */
 	outb (0x40, count & 0xff);
 	outb (0x40, count >> 8);
 
 	intr_register_ext (0x20, timer_interrupt, "8254 Timer");
-	list_init(&sleep_list);
 }
 
 /* Calibrates loops_per_tick, used to implement brief delays. */
@@ -108,21 +88,16 @@ timer_elapsed (int64_t then) {
 }
 
 /* Suspends execution for approximately TICKS timer ticks. */
-void timer_sleep(int64_t ticks) {
-	if (ticks <= 0) return;
+void
+timer_sleep (int64_t ticks) {
+	int64_t start = timer_ticks ();
 
-	enum intr_level old_level = intr_disable();
-
-	struct thread *curr = thread_current();
-	curr->wake_up_tick = timer_ticks() + ticks;
-
-	list_insert_ordered(&sleep_list, &curr->sleep_elem, cmp_wake_tick, NULL);
-
-	thread_block();
-
-	intr_set_level(old_level);
+	ASSERT (intr_get_level () == INTR_ON);
+	// while (timer_elapsed (start) < ticks)
+	// 	thread_yield ();
+	if(timer_elapsed(start) < ticks)
+		thread_sleep(start + ticks);
 }
-
 /* Suspends execution for approximately MS milliseconds. */
 void
 timer_msleep (int64_t ms) {
@@ -150,28 +125,20 @@ timer_print_stats (void) {
 /* Timer interrupt handler. */
 static void
 timer_interrupt (struct intr_frame *args UNUSED) {
-    ticks++;
-    thread_tick();
-
-    while (!list_empty(&sleep_list)) {
-        struct thread *t = list_entry(list_front(&sleep_list),
-                                      struct thread, sleep_elem);
-        if (t->wake_up_tick > ticks)
-            break;
-
-        list_pop_front(&sleep_list);
-        thread_unblock(t);
-    }
-
-    //  여기 추가 (인터럽트 핸들러 끝나기 전에)
-    if (!list_empty(&ready_list)) {
-        struct thread *highest = list_entry(list_front(&ready_list), struct thread, elem);
-        if (highest->priority > thread_current()->priority)
-            intr_yield_on_return();
-    }
+	ticks++;
+	thread_tick ();
+	if(thread_mlfqs){
+		up_recent();
+		if(ticks % 4 == 0){
+			all_recal();
+			if(ticks % TIMER_FREQ == 0){
+				recal_load();
+				all_recal_r();
+			}
+		}
+	}
+thread_wakeup(ticks);
 }
-
-
 
 /* Returns true if LOOPS iterations waits for more than one timer
    tick, otherwise false. */
@@ -229,3 +196,4 @@ real_time_sleep (int64_t num, int32_t denom) {
 		busy_wait (loops_per_tick * num / 1000 * TIMER_FREQ / (denom / 1000));
 	}
 }
+
