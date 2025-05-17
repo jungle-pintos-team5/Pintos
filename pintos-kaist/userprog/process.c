@@ -22,6 +22,66 @@
 #include "vm/vm.h"
 #endif
 
+/* We load ELF binaries.  The following definitions are taken
+ * from the ELF specification, [ELF1], more-or-less verbatim.  */
+
+/* ELF types.  See [ELF1] 1-2. */
+#define EI_NIDENT 16
+
+#define PT_NULL    0            /* Ignore. */
+#define PT_LOAD    1            /* Loadable segment. */
+#define PT_DYNAMIC 2            /* Dynamic linking info. */
+#define PT_INTERP  3            /* Name of dynamic loader. */
+#define PT_NOTE    4            /* Auxiliary info. */
+#define PT_SHLIB   5            /* Reserved. */
+#define PT_PHDR    6            /* Program header table. */
+#define PT_STACK   0x6474e551   /* Stack segment. */
+
+#define PF_X 1          /* Executable. */
+#define PF_W 2          /* Writable. */
+#define PF_R 4          /* Readable. */
+
+
+
+/* Executable header.  See [ELF1] 1-4 to 1-8.
+ * This appears at the very beginning of an ELF binary. */
+struct ELF64_hdr {
+	unsigned char e_ident[EI_NIDENT];
+	uint16_t e_type;
+	uint16_t e_machine;
+	uint32_t e_version;
+	uint64_t e_entry;
+	uint64_t e_phoff;
+	uint64_t e_shoff;
+	uint32_t e_flags;
+	uint16_t e_ehsize;
+	uint16_t e_phentsize;
+	uint16_t e_phnum;
+	uint16_t e_shentsize;
+	uint16_t e_shnum;
+	uint16_t e_shstrndx;
+};
+
+struct ELF64_PHDR {
+	uint32_t p_type;
+	uint32_t p_flags;
+	uint64_t p_offset;
+	uint64_t p_vaddr;
+	uint64_t p_paddr;
+	uint64_t p_filesz;
+	uint64_t p_memsz;
+	uint64_t p_align;
+};
+
+/* Abbreviations */
+#define ELF ELF64_hdr
+#define Phdr ELF64_PHDR
+static bool setup_stack (struct intr_frame *if_);
+static bool validate_segment (const struct Phdr *, struct file *);
+static bool load_segment (struct file *file, off_t ofs, uint8_t *upage,
+                          uint32_t read_bytes, uint32_t zero_bytes,
+                          bool writable);
+
 static void process_cleanup (void);
 static bool load (const char *file_name, struct intr_frame *if_);
 static void initd (void *f_name);
@@ -39,22 +99,39 @@ process_init (void) {
  * thread id, or TID_ERROR if the thread cannot be created.
  * Notice that THIS SHOULD BE CALLED ONCE. */
 tid_t
-process_create_initd (const char *file_name) {
-	char *fn_copy;
-	tid_t tid;
+process_create_initd(const char *file_name) {
+    char *fn_copy;
+    tid_t tid;
 
-	/* Make a copy of FILE_NAME.
-	 * Otherwise there's a race between the caller and load(). */
-	fn_copy = palloc_get_page (0);
-	if (fn_copy == NULL)
-		return TID_ERROR;
-	strlcpy (fn_copy, file_name, PGSIZE);
+    /* file_name 문자열의 복사본을 생성합니다.
+     * 그렇지 않으면 caller와 load() 함수 사이에서 race condition이 발생할 수 있습니다.
+     * (원본 문자열이 중간에 바뀔 수 있기 때문입니다) */
+    fn_copy = palloc_get_page(0);
+    if (fn_copy == NULL)
+        return TID_ERROR;
+    strlcpy(fn_copy, file_name, PGSIZE);  // 커맨드라인 전체 복사
 
-	/* Create a new thread to execute FILE_NAME. */
-	tid = thread_create (file_name, PRI_DEFAULT, initd, fn_copy);
-	if (tid == TID_ERROR)
-		palloc_free_page (fn_copy);
-	return tid;
+    /**
+     * Project 2 - 테스트 케이스 대응
+     * pintos -- run 'echo hello'처럼 커맨드 라인을 직접 입력하면 괜찮지만,
+     * make check에서 테스트 코드를 실행할 때는 이 함수를 통해 process가 만들어집니다.
+     * 이때 `file_name`이 스레드 이름으로 그대로 쓰이는데, 인자가 포함된 전체 커맨드라인이
+     * 스레드 이름으로 들어가면 테스트가 실패할 수 있습니다.
+     *
+     * 예: file_name = "echo hello" → 스레드 이름이 "echo hello"가 되어 실패
+     *     → "echo"만 남기도록 잘라냅니다.
+     */
+    char *ptr;
+    strtok_r(file_name, " ", &ptr);  // file_name은 const지만 strtok_r()는 원본을 수정하려 하기 때문에 주의 필요
+
+    /* 실제 유저 프로그램을 실행할 새 스레드를 생성합니다.
+     * thread_create(스레드 이름, 우선순위, 실행할 함수, 인자로 넘길 파일 이름 복사본)
+     * initd는 스레드가 시작되었을 때 호출될 진입 함수입니다.
+     */
+    tid = thread_create(file_name, PRI_DEFAULT, initd, fn_copy);
+    if (tid == TID_ERROR)
+        palloc_free_page(fn_copy);  // 실패 시 복사한 메모리 해제
+    return tid;
 }
 
 /* A thread function that launches first user process. */
@@ -157,6 +234,38 @@ __do_fork (void *aux) {
 error:
 	thread_exit ();
 }
+/** project2-Command Line Parsing */
+// 유저 스택에 파싱된 토큰을 저장하는 함수
+void argument_stack(char **argv, int argc, struct intr_frame *if_){
+		char *arg_addr[100];
+	int argv_len;
+	//문자열은 나중에 argv[i]가 가리킬 실주소 문자열부터 넣어야 나중에 char *argv[] 배열을 만들 수 있음
+	for (int i = argc - 1; i >=0; i--) {
+		argv_len = strlen(argv[i]) + 1;
+		if_->rsp -= argv_len;
+		memcpy(if_->rsp, argv[i], argv_len);
+		arg_addr[i] = if_->rsp;
+	}
+	//x86-64에서는 stack pointer가 8의 배수 정렬되어야 성능 저하 없이 동작함
+	while (if_->rsp % 8)
+		*(uint8_t *)(--if_->rsp) = 0;
+	//스택 프레임 형식을 갖추기 위해 가짜 리턴 주소를 넣음 리턴하면 그냥 0번 주소 접근해서 죽게 됨
+	if_->rsp -= 8;
+	memset(if_->rsp, 0, sizeof(char *));
+	//배열 역순으로 삽입 이유: 스택에 문자열들이 이미 들어있고, 그 문자열들의 주소를 배열 형태로 다시 push
+	for (int i = argc - 1; i >= 0; i--) {
+		if_->rsp -= 8;
+		memcpy(if_->rsp, &arg_addr[i], sizeof(char *));	
+	}
+	//마지막에 NULL이 되도록 추가
+	if_->rsp = if_->rsp - 8;
+    memset(if_->rsp, 0, sizeof(void *));
+
+    if_->R.rdi = argc; //1번 인자: argc
+    if_->R.rsi = if_->rsp + 8; // 2번 인자: argv (맨 앞에 NULL 있으니까 +8)
+}
+
+	
 
 /* Switch the current execution context to the f_name.
  * Returns -1 on fail. */
@@ -175,18 +284,143 @@ process_exec (void *f_name) {
 
 	/* We first kill the current context */
 	process_cleanup ();
+	
+	/** project2-Command Line Parsing */
+	char *ptr, *arg;
+    int arg_cnt = 0;
+    char *arg_list[32];
+
+    for (arg = strtok_r(file_name, " ", &ptr); arg != NULL; arg = strtok_r(NULL, " ", &ptr))
+        arg_list[arg_cnt++] = arg;
 
 	/* And then load the binary */
 	success = load (file_name, &_if);
 
+	/** project2-Command Line Parsing */
+	argument_stack(arg_list, arg_cnt, &_if);
+	
 	/* If load failed, quit. */
 	palloc_free_page (file_name);
 	if (!success)
 		return -1;
 
+	hex_dump(_if.rsp, _if.rsp, USER_STACK - _if.rsp, true); // 0x47480000	
+
 	/* Start switched process. */
 	do_iret (&_if);
 	NOT_REACHED ();
+}
+
+static bool
+load (const char *file_name, struct intr_frame *if_) {
+    struct thread *t = thread_current();           // 현재 실행 중인 스레드
+    struct ELF ehdr;                               // ELF 헤더 구조체
+    struct file *file = NULL;                      // 열 실행 파일 객체
+    off_t file_ofs;                                // 파일에서의 오프셋
+    bool success = false;                          // 성공 여부
+    int i;
+
+    /* 페이지 테이블 생성 및 활성화 */
+    t->pml4 = pml4_create();
+    if (t->pml4 == NULL)
+        goto done;
+    process_activate(thread_current());
+
+    /* 실행할 ELF 바이너리 파일 열기 */
+    file = filesys_open(file_name);
+    if (file == NULL) {
+        printf("load: %s: open failed\n", file_name);
+        goto done;
+    }
+
+    /** Project 2: 실행 중인 파일 저장 및 쓰기 방지 */
+    t->runn_file = file;
+    file_deny_write(file); // 실행 중인 파일에 대해 write 방지 설정
+
+    /* ELF 헤더 읽고 유효성 검사 */
+    if (file_read(file, &ehdr, sizeof ehdr) != sizeof ehdr ||
+        memcmp(ehdr.e_ident, "\177ELF\2\1\1", 7) ||           // ELF magic number 및 포맷 검사
+        ehdr.e_type != 2 ||                                   // 실행 파일인지
+        ehdr.e_machine != 0x3E ||                             // amd64 아키텍처인지
+        ehdr.e_version != 1 ||
+        ehdr.e_phentsize != sizeof(struct Phdr) ||
+        ehdr.e_phnum > 1024) {
+        printf("load: %s: error loading executable\n", file_name);
+        goto done;
+    }
+
+    /* 프로그램 헤더들을 순회하며 segment 로딩 */
+    file_ofs = ehdr.e_phoff;
+    for (i = 0; i < ehdr.e_phnum; i++) {
+        struct Phdr phdr;
+
+        if (file_ofs < 0 || file_ofs > file_length(file))
+            goto done;
+        file_seek(file, file_ofs);
+
+        if (file_read(file, &phdr, sizeof phdr) != sizeof phdr)
+            goto done;
+        file_ofs += sizeof phdr;
+
+        switch (phdr.p_type) {
+            case PT_NULL:
+            case PT_NOTE:
+            case PT_PHDR:
+            case PT_STACK:
+            default:
+                /* 무시할 수 있는 segment들은 skip */
+                break;
+
+            case PT_DYNAMIC:
+            case PT_INTERP:
+            case PT_SHLIB:
+                /* Pintos에서는 허용하지 않는 segment 타입 */
+                goto done;
+
+            case PT_LOAD:
+                /* 메모리에 적재해야 하는 segment */
+                if (validate_segment(&phdr, file)) {
+                    bool writable = (phdr.p_flags & PF_W) != 0; // 쓰기 권한 여부
+                    uint64_t file_page = phdr.p_offset & ~PGMASK;
+                    uint64_t mem_page  = phdr.p_vaddr  & ~PGMASK;
+                    uint64_t page_offset = phdr.p_vaddr & PGMASK;
+                    uint32_t read_bytes, zero_bytes;
+
+                    if (phdr.p_filesz > 0) {
+                        /* 파일에서 읽고, 남은 부분은 0으로 채움 */
+                        read_bytes = page_offset + phdr.p_filesz;
+                        zero_bytes = ROUND_UP(page_offset + phdr.p_memsz, PGSIZE) - read_bytes;
+                    } else {
+                        /* 전부 0으로 채워야 하는 BSS segment */
+                        read_bytes = 0;
+                        zero_bytes = ROUND_UP(page_offset + phdr.p_memsz, PGSIZE);
+                    }
+
+                    /* load_segment: 실제 메모리에 적재 수행 */
+                    if (!load_segment(file, file_page, (void *) mem_page,
+                                      read_bytes, zero_bytes, writable))
+                        goto done;
+                } else {
+                    goto done;
+                }
+                break;
+        }
+    }
+
+    /* 사용자 스택 초기화 (스택 프레임 설정) */
+    if (!setup_stack(if_))
+        goto done;
+
+    /* 유저 프로그램 시작 주소 설정 */
+    if_->rip = ehdr.e_entry;
+
+    success = true;
+
+done:
+    /* 성공 여부에 따라 종료. (파일 close는 Project 2에서는 실행 중 파일 유지 필요로 주석처리) */
+    // file_close(file);
+
+    return success;
 }
 
 
@@ -204,8 +438,13 @@ process_wait (tid_t child_tid UNUSED) {
 	/* XXX: Hint) The pintos exit if process_wait (initd), we recommend you
 	 * XXX:       to add infinite loop here before
 	 * XXX:       implementing the process_wait. */
+
+	/** project2-Command Line Parsing */
+	while (1){}
+
 	return -1;
 }
+
 
 /* Exit the process. This function is called by thread_exit (). */
 void
@@ -257,173 +496,7 @@ process_activate (struct thread *next) {
 	tss_update (next);
 }
 
-/* We load ELF binaries.  The following definitions are taken
- * from the ELF specification, [ELF1], more-or-less verbatim.  */
 
-/* ELF types.  See [ELF1] 1-2. */
-#define EI_NIDENT 16
-
-#define PT_NULL    0            /* Ignore. */
-#define PT_LOAD    1            /* Loadable segment. */
-#define PT_DYNAMIC 2            /* Dynamic linking info. */
-#define PT_INTERP  3            /* Name of dynamic loader. */
-#define PT_NOTE    4            /* Auxiliary info. */
-#define PT_SHLIB   5            /* Reserved. */
-#define PT_PHDR    6            /* Program header table. */
-#define PT_STACK   0x6474e551   /* Stack segment. */
-
-#define PF_X 1          /* Executable. */
-#define PF_W 2          /* Writable. */
-#define PF_R 4          /* Readable. */
-
-/* Executable header.  See [ELF1] 1-4 to 1-8.
- * This appears at the very beginning of an ELF binary. */
-struct ELF64_hdr {
-	unsigned char e_ident[EI_NIDENT];
-	uint16_t e_type;
-	uint16_t e_machine;
-	uint32_t e_version;
-	uint64_t e_entry;
-	uint64_t e_phoff;
-	uint64_t e_shoff;
-	uint32_t e_flags;
-	uint16_t e_ehsize;
-	uint16_t e_phentsize;
-	uint16_t e_phnum;
-	uint16_t e_shentsize;
-	uint16_t e_shnum;
-	uint16_t e_shstrndx;
-};
-
-struct ELF64_PHDR {
-	uint32_t p_type;
-	uint32_t p_flags;
-	uint64_t p_offset;
-	uint64_t p_vaddr;
-	uint64_t p_paddr;
-	uint64_t p_filesz;
-	uint64_t p_memsz;
-	uint64_t p_align;
-};
-
-/* Abbreviations */
-#define ELF ELF64_hdr
-#define Phdr ELF64_PHDR
-
-static bool setup_stack (struct intr_frame *if_);
-static bool validate_segment (const struct Phdr *, struct file *);
-static bool load_segment (struct file *file, off_t ofs, uint8_t *upage,
-		uint32_t read_bytes, uint32_t zero_bytes,
-		bool writable);
-
-/* Loads an ELF executable from FILE_NAME into the current thread.
- * Stores the executable's entry point into *RIP
- * and its initial stack pointer into *RSP.
- * Returns true if successful, false otherwise. */
-static bool
-load (const char *file_name, struct intr_frame *if_) {
-	struct thread *t = thread_current ();
-	struct ELF ehdr;
-	struct file *file = NULL;
-	off_t file_ofs;
-	bool success = false;
-	int i;
-
-	/* Allocate and activate page directory. */
-	t->pml4 = pml4_create ();
-	if (t->pml4 == NULL)
-		goto done;
-	process_activate (thread_current ());
-
-	/* Open executable file. */
-	file = filesys_open (file_name);
-	if (file == NULL) {
-		printf ("load: %s: open failed\n", file_name);
-		goto done;
-	}
-
-	/* Read and verify executable header. */
-	if (file_read (file, &ehdr, sizeof ehdr) != sizeof ehdr
-			|| memcmp (ehdr.e_ident, "\177ELF\2\1\1", 7)
-			|| ehdr.e_type != 2
-			|| ehdr.e_machine != 0x3E // amd64
-			|| ehdr.e_version != 1
-			|| ehdr.e_phentsize != sizeof (struct Phdr)
-			|| ehdr.e_phnum > 1024) {
-		printf ("load: %s: error loading executable\n", file_name);
-		goto done;
-	}
-
-	/* Read program headers. */
-	file_ofs = ehdr.e_phoff;
-	for (i = 0; i < ehdr.e_phnum; i++) {
-		struct Phdr phdr;
-
-		if (file_ofs < 0 || file_ofs > file_length (file))
-			goto done;
-		file_seek (file, file_ofs);
-
-		if (file_read (file, &phdr, sizeof phdr) != sizeof phdr)
-			goto done;
-		file_ofs += sizeof phdr;
-		switch (phdr.p_type) {
-			case PT_NULL:
-			case PT_NOTE:
-			case PT_PHDR:
-			case PT_STACK:
-			default:
-				/* Ignore this segment. */
-				break;
-			case PT_DYNAMIC:
-			case PT_INTERP:
-			case PT_SHLIB:
-				goto done;
-			case PT_LOAD:
-				if (validate_segment (&phdr, file)) {
-					bool writable = (phdr.p_flags & PF_W) != 0;
-					uint64_t file_page = phdr.p_offset & ~PGMASK;
-					uint64_t mem_page = phdr.p_vaddr & ~PGMASK;
-					uint64_t page_offset = phdr.p_vaddr & PGMASK;
-					uint32_t read_bytes, zero_bytes;
-					if (phdr.p_filesz > 0) {
-						/* Normal segment.
-						 * Read initial part from disk and zero the rest. */
-						read_bytes = page_offset + phdr.p_filesz;
-						zero_bytes = (ROUND_UP (page_offset + phdr.p_memsz, PGSIZE)
-								- read_bytes);
-					} else {
-						/* Entirely zero.
-						 * Don't read anything from disk. */
-						read_bytes = 0;
-						zero_bytes = ROUND_UP (page_offset + phdr.p_memsz, PGSIZE);
-					}
-					if (!load_segment (file, file_page, (void *) mem_page,
-								read_bytes, zero_bytes, writable))
-						goto done;
-				}
-				else
-					goto done;
-				break;
-		}
-	}
-
-	/* Set up stack. */
-	if (!setup_stack (if_))
-		goto done;
-
-	/* Start address. */
-	if_->rip = ehdr.e_entry;
-
-	/* TODO: Your code goes here.
-	 * TODO: Implement argument passing (see project2/argument_passing.html). */
-
-	success = true;
-
-done:
-	/* We arrive here whether the load is successful or not. */
-	file_close (file);
-	return success;
-}
 
 
 /* Checks whether PHDR describes a valid, loadable segment in

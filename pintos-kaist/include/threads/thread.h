@@ -98,6 +98,10 @@ struct thread {
 	struct lock *wait;
 	struct list donates;
 	struct list_elem delem;
+#ifdef USERPROG
+	/* Project 2: 실행 중인 유저 프로그램의 파일 객체 */
+	struct file *runn_file;  // 실행 중인 파일을 저장 (write 금지용)
+#endif	
 	/* Shared between thread.c and synch.c. */
 	struct list_elem elem;              /* List element. */
 	int64_t wakeup;
