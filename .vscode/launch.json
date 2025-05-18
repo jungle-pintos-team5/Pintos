@@ -1,0 +1,21 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Attach to Pintos",
+      "type": "cppdbg",
+      "request": "launch",
+      "MIMode": "gdb",
+      "miDebuggerPath": "gdb",
+      "miDebuggerServerAddress": "localhost:1234",
+      "program": "${workspaceFolder}/pintos-kaist/userprog/build/kernel.o",
+      "cwd": "${workspaceFolder}/pintos-kaist/userprog/build",
+      "externalConsole": false,
+      "stopAtEntry": false,
+      "setupCommands": [
+        { "text": "set pagination off" },
+        { "text": "set breakpoint pending on" }
+      ]
+    }
+  ]
+}
