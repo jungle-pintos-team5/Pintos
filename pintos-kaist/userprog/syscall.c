@@ -41,6 +41,7 @@ syscall_init (void) {
 void
 syscall_handler (struct intr_frame *f UNUSED) {
 	// TODO: Your implementation goes here.
+	printf ("system call!\n");
 	switch (f->R.rax)
 	{
 	case SYS_WRITE:
@@ -53,7 +54,6 @@ syscall_handler (struct intr_frame *f UNUSED) {
 		thread_exit ();
 		break;
 	}
-	
 }
 
 

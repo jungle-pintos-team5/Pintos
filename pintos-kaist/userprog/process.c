@@ -196,17 +196,14 @@ process_exec (void *f_name) {
 
 		token = strtok_r(NULL, " ", &save_ptr);
 	}
-
 	put_argu_stack(arg_list, argc, &_if);
 
 	/* If load failed, quit. */
 	palloc_free_page (file_name);
 
 	if (!success){
-		printf("[DEBUG] load() return value: %d\n", success);
 		return -1;
 	}
-
 	hex_dump(_if.rsp, _if.rsp, USER_STACK - _if.rsp, true);
 
 	/* Start switched process. */
@@ -215,16 +212,17 @@ process_exec (void *f_name) {
 }
 
 void put_argu_stack(char **argv, int argc, struct intr_frame *_if){
-	int addr[argc];
+	char *addr[argc];
 	for(int i = argc-1; i >= 0; i--){
 		if(i == argc){
 			continue;
 		}
-
-		int argu_lenth = strlen(argv[i])+1;
+		int argu_lenth = strlen(argv[i])+1; // 문자열 길이 + /0
 		_if->rsp -= argu_lenth;
+		// hex_dump(_if->rsp, _if->rsp, 4, true);
 		memcpy(_if->rsp, argv[i], argu_lenth);
 		addr[i] = _if->rsp;
+		// printf("addr[%d]에서 얼마? %p\n", i, addr[i]);
 	}
 	// padding이 들어가야 함.
 	int padding = _if->rsp % 8;
@@ -232,7 +230,8 @@ void put_argu_stack(char **argv, int argc, struct intr_frame *_if){
 	memset(_if->rsp, 0, padding);
 
 	_if->rsp -= 8;
-	*(char *)_if->rsp = 0;
+	memset(_if->rsp, 0, 8);
+	
 
 	for(int i = argc-1; i >= 0; i--){
 		if(i == argc){
@@ -240,13 +239,13 @@ void put_argu_stack(char **argv, int argc, struct intr_frame *_if){
 		}
 
 		_if->rsp -= 8;
-		*(char *)_if->rsp = addr[i];
+		memcpy(_if->rsp, argv[i], 8);
+		printf("RSP = %p\n", (void*) _if->rsp);
+		printf("*RSP(str) = %p\n", *(void **)_if->rsp);
 	}
 
 	_if->rsp -= 8;
-	*(char *)_if->rsp = 0;
-	// printf("현재 rsp의 값 출력 : %p\n", (_if->rsp));
-	// printf("현재 rsp의 data를 출력 : %d\n", *(char *)_if->rsp);
+	memset(_if->rsp, 0, 8);
 }
 
 
