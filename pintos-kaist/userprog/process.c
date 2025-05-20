@@ -240,9 +240,15 @@ void put_argu_stack(char **argv, int argc, struct intr_frame *_if){
 
 		_if->rsp -= 8;
 		memcpy(_if->rsp, argv[i], 8);
-		printf("RSP = %p\n", (void*) _if->rsp);
-		printf("*RSP(str) = %p\n", *(void **)_if->rsp);
 	}
+
+	_if->rsp -= 8;
+	memcpy(_if->rsp, argv[0], 8);
+	printf("RSP = %p\n", (void*) _if->rsp);
+	// printf("*RSP(str) = %s\n", _if->rsp);
+
+	_if->rsp -= 8;
+	*(uint64_t *)(_if->rsp) = (uint64_t) argc; // 64bit에서 
 
 	_if->rsp -= 8;
 	memset(_if->rsp, 0, 8);
