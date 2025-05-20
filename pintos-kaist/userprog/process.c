@@ -304,7 +304,7 @@ process_exec (void *f_name) {
 	if (!success)
 		return -1;
 
-	hex_dump(_if.rsp, _if.rsp, USER_STACK - _if.rsp, true); // 0x47480000	
+	// hex_dump(_if.rsp, _if.rsp, USER_STACK - _if.rsp, true); // 0x47480000	
 
 	/* Start switched process. */
 	do_iret (&_if);
@@ -440,7 +440,7 @@ process_wait (tid_t child_tid UNUSED) {
 	 * XXX:       implementing the process_wait. */
 
 	/** project2-Command Line Parsing */
-	while (1){}
+	timer_msleep(2000);
 
 	return -1;
 }

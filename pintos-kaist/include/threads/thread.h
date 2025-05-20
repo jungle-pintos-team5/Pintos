@@ -95,6 +95,7 @@ struct thread {
 	char name[16];                      /* Name (for debugging purposes). */
 	int priority;                       /* Priority. */
 	int opriority;
+	int exit_status;  
 	struct lock *wait;
 	struct list donates;
 	struct list_elem delem;
@@ -170,3 +171,10 @@ void recal_pri(struct thread *vv);
 void all_recal(void);
 void all_recal_r(void);
 #endif /* threads/thread.h */
+#define USERPROG 
+#ifdef USERPROG
+	/* Owned by userprog/process.c. */
+	uint64_t *pml4;                     /* Page map level 4 */
+	/** project2-System Call */
+	int exit_status;
+#endif
