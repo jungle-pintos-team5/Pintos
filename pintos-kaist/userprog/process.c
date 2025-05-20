@@ -18,6 +18,8 @@
 #include "threads/mmu.h"
 #include "threads/vaddr.h"
 #include "intrinsic.h"
+#include "lib/string.h"
+#include "lib/stdio.h"
 #ifdef VM
 #include "vm/vm.h"
 #endif
@@ -49,9 +51,11 @@ process_create_initd (const char *file_name) {
 	if (fn_copy == NULL)
 		return TID_ERROR;
 	strlcpy (fn_copy, file_name, PGSIZE);
-
+	char *ptr;
+	strtok_r(file_name," ",&ptr);
 	/* Create a new thread to execute FILE_NAME. */
 	tid = thread_create (file_name, PRI_DEFAULT, initd, fn_copy);
+
 	if (tid == TID_ERROR)
 		palloc_free_page (fn_copy);
 	return tid;
@@ -176,17 +180,73 @@ process_exec (void *f_name) {
 	/* We first kill the current context */
 	process_cleanup ();
 
+	char *save_ptr;
+	char *token;
+	token = strtok_r(file_name, " ", &save_ptr);
+
 	/* And then load the binary */
-	success = load (file_name, &_if);
+	success = load (file_name, &_if); // load fail
+
+	char *arg_list[32];
+	int argc = 0;
+	while (token != NULL && argc < 32){
+		arg_list[argc] = token;
+		// printf("token 출력 %s\n", arg_list[argc]);
+		argc++;
+
+		token = strtok_r(NULL, " ", &save_ptr);
+	}
+
+	put_argu_stack(arg_list, argc, &_if);
 
 	/* If load failed, quit. */
 	palloc_free_page (file_name);
-	if (!success)
+
+	if (!success){
+		printf("[DEBUG] load() return value: %d\n", success);
 		return -1;
+	}
+
+	hex_dump(_if.rsp, _if.rsp, USER_STACK - _if.rsp, true);
 
 	/* Start switched process. */
 	do_iret (&_if);
 	NOT_REACHED ();
+}
+
+void put_argu_stack(char **argv, int argc, struct intr_frame *_if){
+	int addr[argc];
+	for(int i = argc-1; i >= 0; i--){
+		if(i == argc){
+			continue;
+		}
+
+		int argu_lenth = strlen(argv[i])+1;
+		_if->rsp -= argu_lenth;
+		memcpy(_if->rsp, argv[i], argu_lenth);
+		addr[i] = _if->rsp;
+	}
+	// padding이 들어가야 함.
+	int padding = _if->rsp % 8;
+	_if->rsp -= padding;
+	memset(_if->rsp, 0, padding);
+
+	_if->rsp -= 8;
+	*(char *)_if->rsp = 0;
+
+	for(int i = argc-1; i >= 0; i--){
+		if(i == argc){
+			continue;
+		}
+
+		_if->rsp -= 8;
+		*(char *)_if->rsp = addr[i];
+	}
+
+	_if->rsp -= 8;
+	*(char *)_if->rsp = 0;
+	// printf("현재 rsp의 값 출력 : %p\n", (_if->rsp));
+	// printf("현재 rsp의 data를 출력 : %d\n", *(char *)_if->rsp);
 }
 
 
@@ -204,8 +264,8 @@ process_wait (tid_t child_tid UNUSED) {
 	/* XXX: Hint) The pintos exit if process_wait (initd), we recommend you
 	 * XXX:       to add infinite loop here before
 	 * XXX:       implementing the process_wait. */
-	for(int i=0; i<100000000; i++){
-		;
+	while(1){
+		
 	}
 	return -1;
 }
