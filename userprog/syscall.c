@@ -7,6 +7,7 @@
 #include "userprog/gdt.h"
 #include "threads/flags.h"
 #include "intrinsic.h"
+#include "filesys/filesys.h"
 
 void syscall_entry (void);
 void syscall_handler (struct intr_frame *);
@@ -37,7 +38,7 @@ syscall_init (void) {
 			FLAG_IF | FLAG_TF | FLAG_DF | FLAG_IOPL | FLAG_AC | FLAG_NT);
 }
 
-void check_addr(vaddr){
+void check_addr(void *vaddr){
 	struct thread *t = thread_current();
 
 	// 유저 주소인가?
@@ -47,6 +48,10 @@ void check_addr(vaddr){
 
 	// 주소가 page랑 매핑되어 있는가?
 	if(pml4_get_page(t->pml4, vaddr) == NULL){
+		exit(-1);
+	}
+
+	if(vaddr == NULL){
 		exit(-1);
 	}
 }
@@ -67,6 +72,7 @@ syscall_handler (struct intr_frame *f UNUSED) {
 	case SYS_EXEC:
 		break;
 	case SYS_CREATE:
+		f->R.rax = create(f->R.rdi, f->R.rsi);
 		break;
 	case SYS_REMOVE:
 		break;
@@ -114,4 +120,9 @@ int write (int fd, const void *buffer, unsigned size) {
   }
 
   return -1;
+}
+
+bool create(const char *file, unsigned initial_size){
+	check_addr(file);
+	return filesys_create(file, initial_size);
 }
