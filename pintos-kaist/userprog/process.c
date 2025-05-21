@@ -196,7 +196,7 @@ process_exec (void *f_name) {
 
 		token = strtok_r(NULL, " ", &save_ptr);
 	}
-	put_argu_stack(arg_list, argc, &_if);
+	// put_argu_stack(arg_list, argc, &_if);
 
 	/* If load failed, quit. */
 	palloc_free_page (file_name);
@@ -239,12 +239,12 @@ void put_argu_stack(char **argv, int argc, struct intr_frame *_if){
 		}
 
 		_if->rsp -= 8;
-		memcpy(_if->rsp, argv[i], 8);
+		memcpy(_if->rsp, &addr[i], 8);
 	}
 
 	_if->rsp -= 8;
-	memcpy(_if->rsp, argv[0], 8);
-	printf("RSP = %p\n", (void*) _if->rsp);
+	memcpy(_if->rsp, &addr[0], 8);
+	// printf("RSP = %p\n", (void*) _if->rsp);
 	// printf("*RSP(str) = %s\n", _if->rsp);
 
 	_if->rsp -= 8;
