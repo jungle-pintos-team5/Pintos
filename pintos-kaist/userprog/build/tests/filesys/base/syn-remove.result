@@ -14,7 +14,7 @@ Acceptable output:
 Differences in `diff -u' format:
   (syn-remove) begin
   (syn-remove) create "deleteme"
-- (syn-remove) open "deleteme"
+  (syn-remove) open "deleteme"
 - (syn-remove) remove "deleteme"
 - (syn-remove) write "deleteme"
 - (syn-remove) seek "deleteme" to 0

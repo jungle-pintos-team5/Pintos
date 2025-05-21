@@ -14,14 +14,15 @@ Putting 'lg-seq-block' into the file system...
 Executing 'lg-seq-block':
 (lg-seq-block) begin
 (lg-seq-block) create "noodle"
+(lg-seq-block) open "noodle"
 lg-seq-block: exit(-1)
 Execution of 'lg-seq-block' complete.
-Timer: 284 ticks
-Thread: 236 idle ticks, 41 kernel ticks, 7 user ticks
+Timer: 283 ticks
+Thread: 235 idle ticks, 41 kernel ticks, 8 user ticks
 hd0:0: 0 reads, 0 writes
-hd0:1: 81 reads, 242 writes
+hd0:1: 103 reads, 402 writes
 hd1:0: 107 reads, 0 writes
-Console: 878 characters output
+Console: 908 characters output
 Keyboard: 0 keys pressed
 Exception: 0 page faults
 Powering off...

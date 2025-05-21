@@ -15,8 +15,8 @@ Executing 'wait-bad-pid':
 (wait-bad-pid) begin
 wait-bad-pid: exit(-1)
 Execution of 'wait-bad-pid' complete.
-Timer: 284 ticks
-Thread: 225 idle ticks, 54 kernel ticks, 6 user ticks
+Timer: 285 ticks
+Thread: 239 idle ticks, 42 kernel ticks, 4 user ticks
 hd0:0: 0 reads, 0 writes
 hd0:1: 80 reads, 232 writes
 hd1:0: 102 reads, 0 writes

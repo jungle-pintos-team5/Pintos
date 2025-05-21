@@ -1,5 +1,6 @@
 #ifndef THREADS_THREAD_H
 #define THREADS_THREAD_H
+#include "threads/thread.h"
 
 #include <debug.h>
 #include <list.h>
@@ -31,6 +32,8 @@ typedef int tid_t;
 #define NICE_DEFAULT 0
 #define RECENT_CPU_DEFAULT 0
 #define LOAD_AVG_DEFAULT 0
+#define FDT_PAGES 3
+#define FDCOUNT_LIMIT (FDT_PAGES * (1 << 9))
 /* A kernel thread or user process.
  *
  * Each thread structure is stored in its own 4 kB page.  The
@@ -88,6 +91,7 @@ typedef int tid_t;
  * only because they are mutually exclusive: only a thread in the
  * ready state is on the run queue, whereas only a thread in the
  * blocked state is on a semaphore wait list. */
+
 struct thread {
 	/* Owned by thread.c. */
 	tid_t tid;                          /* Thread identifier. */
@@ -99,9 +103,17 @@ struct thread {
 	struct lock *wait;
 	struct list donates;
 	struct list_elem delem;
+	
+
+
+
 #ifdef USERPROG
 	/* Project 2: 실행 중인 유저 프로그램의 파일 객체 */
 	struct file *runn_file;  // 실행 중인 파일을 저장 (write 금지용)
+	struct file **fd_table;  // 파일 디스크립터 테이블
+	int fd_idx;                     // fd테이블에 open spot의 인덱스
+
+	
 #endif	
 	/* Shared between thread.c and synch.c. */
 	struct list_elem elem;              /* List element. */
@@ -174,7 +186,8 @@ void all_recal_r(void);
 #define USERPROG 
 #ifdef USERPROG
 	/* Owned by userprog/process.c. */
-	uint64_t *pml4;                     /* Page map level 4 */
+	// uint64_t *pml4;                     /* Page map level 4 */
+	// struct file **fd_table;  // 파일 디스크립터 테이블
 	/** project2-System Call */
 	int exit_status;
 #endif

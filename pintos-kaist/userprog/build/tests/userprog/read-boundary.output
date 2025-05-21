@@ -17,8 +17,8 @@ Executing 'read-boundary':
 (read-boundary) open "sample.txt"
 read-boundary: exit(-1)
 Execution of 'read-boundary' complete.
-Timer: 289 ticks
-Thread: 233 idle ticks, 52 kernel ticks, 5 user ticks
+Timer: 288 ticks
+Thread: 241 idle ticks, 42 kernel ticks, 6 user ticks
 hd0:0: 0 reads, 0 writes
 hd0:1: 117 reads, 258 writes
 hd1:0: 110 reads, 0 writes

@@ -37,12 +37,38 @@ syscall_init (void) {
 			FLAG_IF | FLAG_TF | FLAG_DF | FLAG_IOPL | FLAG_AC | FLAG_NT);
 }
 
-void check_address(void *addr)
+
+
+
+void check_address(const void *addr)
 {
   struct thread *cur = thread_current();
   if (addr == NULL || !(is_user_vaddr(addr)) || pml4_get_page(cur->pml4, addr) == NULL)
     exit(-1);
 }
+// fd로 파일 찾는 함수
+static struct file *find_file_by_fd(int fd) {
+	struct thread *cur = thread_current();
+
+	if (fd < 0 || fd >= FDCOUNT_LIMIT) {
+		return NULL;
+	}
+	return cur->fd_table[fd];
+}
+// fd인자를 받아 파일 크기 리턴
+int filesize(int fd) {
+	struct file *open_file = find_file_by_fd(fd);
+	if (open_file == NULL) {
+		return -1;
+	}
+	return file_length(open_file);}
+// 파일 생성하는 시스템 콜
+// 성공일 경우 true, 실패일 경우 false 리턴
+bool create(const char *file, unsigned initial_size) {		// file: 생성할 파일의 이름 및 경로 정보, initial_size: 생성할 파일의 크기
+	check_address(file);
+	return filesys_create(file, initial_size);
+}
+
 void
 syscall_handler (struct intr_frame *f UNUSED) {
 	// TODO: Your implementation goes here.
@@ -68,9 +94,10 @@ int sys_number = f->R.rax;
         // case SYS_WAIT:
         //     f->R.rax = process_wait(f->R.rdi);
         //     break;
-        // case SYS_CREATE:
-        //     f->R.rax = create(f->R.rdi, f->R.rsi);
-        //     break;
+        case SYS_CREATE:
+            f->R.rax = create(f->R.rdi, f->R.rsi);
+            break;
+		
         // case SYS_REMOVE:
         //     f->R.rax = remove(f->R.rdi);
         //     break;

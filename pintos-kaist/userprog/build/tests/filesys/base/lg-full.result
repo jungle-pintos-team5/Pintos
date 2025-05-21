@@ -14,7 +14,7 @@ Acceptable output:
 Differences in `diff -u' format:
   (lg-full) begin
   (lg-full) create "quux"
-- (lg-full) open "quux"
+  (lg-full) open "quux"
 - (lg-full) writing "quux"
 - (lg-full) close "quux"
 - (lg-full) open "quux" for verification

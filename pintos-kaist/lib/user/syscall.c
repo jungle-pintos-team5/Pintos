@@ -1,6 +1,7 @@
 #include <syscall.h>
 #include <stdint.h>
 #include "../syscall-nr.h"
+#include "threads/thread.h"
 
 __attribute__((always_inline))
 static __inline int64_t syscall (uint64_t num_, uint64_t a1_, uint64_t a2_,
@@ -124,6 +125,14 @@ int
 write (int fd, const void *buffer, unsigned size) {
 	return syscall3 (SYS_WRITE, fd, buffer, size);
 }
+
+// // fd값 리턴, 실패 시 -1 리턴
+// int
+// open (const char *file) {
+//   return syscall1 (SYS_OPEN, file);
+// }
+
+
 
 void
 seek (int fd, unsigned position) {

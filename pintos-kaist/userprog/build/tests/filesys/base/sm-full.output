@@ -14,14 +14,15 @@ Putting 'sm-full' into the file system...
 Executing 'sm-full':
 (sm-full) begin
 (sm-full) create "quux"
+(sm-full) open "quux"
 sm-full: exit(-1)
 Execution of 'sm-full' complete.
 Timer: 285 ticks
-Thread: 232 idle ticks, 48 kernel ticks, 6 user ticks
+Thread: 223 idle ticks, 53 kernel ticks, 9 user ticks
 hd0:0: 0 reads, 0 writes
-hd0:1: 81 reads, 242 writes
+hd0:1: 103 reads, 266 writes
 hd1:0: 107 reads, 0 writes
-Console: 836 characters output
+Console: 859 characters output
 Keyboard: 0 keys pressed
 Exception: 0 page faults
 Powering off...

@@ -31,7 +31,7 @@ Acceptable output:
 Differences in `diff -u' format:
   (syn-read) begin
   (syn-read) create "data"
-- (syn-read) open "data"
+  (syn-read) open "data"
 - (syn-read) write "data"
 - (syn-read) close "data"
 - (syn-read) exec child 1 of 10: "child-syn-read 0"
