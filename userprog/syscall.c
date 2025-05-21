@@ -37,6 +37,20 @@ syscall_init (void) {
 			FLAG_IF | FLAG_TF | FLAG_DF | FLAG_IOPL | FLAG_AC | FLAG_NT);
 }
 
+void check_addr(vaddr){
+	struct thread *t = thread_current();
+
+	// 유저 주소인가?
+	if(!is_user_vaddr(vaddr)){
+		exit(-1);
+	}
+
+	// 주소가 page랑 매핑되어 있는가?
+	if(pml4_get_page(t->pml4, vaddr) == NULL){
+		exit(-1);
+	}
+}
+
 /* The main system call interface */
 void
 syscall_handler (struct intr_frame *f UNUSED) {
@@ -87,7 +101,7 @@ void exit(int status){
 	struct thread *cur = thread_current();
     cur->exit_status = status;
 
-	printf("%s: exit(%d)\n", thread_name(), status); 
+	printf("%s: exit[%d]\n", thread_name(), status); 
 	thread_exit();	
 }
 
