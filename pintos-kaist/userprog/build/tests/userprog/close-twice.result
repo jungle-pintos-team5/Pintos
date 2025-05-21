@@ -10,7 +10,7 @@ Acceptable output:
 Differences in `diff -u' format:
   (close-twice) begin
   (close-twice) open "sample.txt"
-- (close-twice) close "sample.txt"
+  (close-twice) close "sample.txt"
 - (close-twice) close "sample.txt" again
   close-twice: exit(-1)
 Acceptable output:
@@ -23,7 +23,7 @@ Acceptable output:
 Differences in `diff -u' format:
   (close-twice) begin
   (close-twice) open "sample.txt"
-- (close-twice) close "sample.txt"
+  (close-twice) close "sample.txt"
 - (close-twice) close "sample.txt" again
 - (close-twice) end
 - close-twice: exit(0)

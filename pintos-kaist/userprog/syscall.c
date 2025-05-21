@@ -8,6 +8,11 @@
 #include "threads/flags.h"
 #include "intrinsic.h"
 
+#include "threads/palloc.h"
+#include "threads/vaddr.h"
+
+
+
 void syscall_entry (void);
 void syscall_handler (struct intr_frame *);
 
@@ -45,6 +50,7 @@ void check_address(const void *addr)
   struct thread *cur = thread_current();
   if (addr == NULL || !(is_user_vaddr(addr)) || pml4_get_page(cur->pml4, addr) == NULL)
     exit(-1);
+	
 }
 // fd로 파일 찾는 함수
 static struct file *find_file_by_fd(int fd) {
@@ -101,9 +107,9 @@ int sys_number = f->R.rax;
         // case SYS_REMOVE:
         //     f->R.rax = remove(f->R.rdi);
         //     break;
-        // case SYS_OPEN:
-        //     f->R.rax = open(f->R.rdi);
-        //     break;
+        case SYS_OPEN:
+            f->R.rax = open(f->R.rdi);
+            break;
         // case SYS_FILESIZE:
         //     f->R.rax = filesize(f->R.rdi);
         //     break;
@@ -152,3 +158,29 @@ int write(int fd, const void *buffer, unsigned size)
   }
   return -1;
 }
+int open(const char *file) {
+	check_address(file);  // ← 반드시 제일 먼저
+  
+	struct file *open_file = filesys_open(file);
+	if (open_file == NULL)
+	  return -1;
+  
+	int fd = add_file_to_fdt(open_file);
+	if (fd == -1)
+	  file_close(open_file);
+  
+	return fd;
+  }
+  int add_file_to_fdt(struct file *file) {
+	struct thread *cur = thread_current();
+	struct file **fdt = cur->fd_table;
+  
+	while (cur->fd_idx < FDCOUNT_LIMIT && fdt[cur->fd_idx])
+	  cur->fd_idx++;
+  
+	if (cur->fd_idx >= FDCOUNT_LIMIT)
+	  return -1;
+  
+	fdt[cur->fd_idx] = file;
+	return cur->fd_idx++;
+  }

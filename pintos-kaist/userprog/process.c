@@ -305,7 +305,12 @@ process_exec (void *f_name) {
 		return -1;
 
 	// hex_dump(_if.rsp, _if.rsp, USER_STACK - _if.rsp, true); // 0x47480000	
+	struct thread *cur = thread_current();
+	cur->fd_table = palloc_get_page(PAL_ZERO);
+	if (cur->fd_table == NULL)
+  		exit(-1);
 
+	cur->fd_idx = 2;
 	/* Start switched process. */
 	do_iret (&_if);
 	NOT_REACHED ();
@@ -456,6 +461,7 @@ process_exit (void) {
 	 * TODO: We recommend you to implement process resource cleanup here. */
 
 	process_cleanup ();
+	palloc_free_page(thread_current()->fd_table);
 }
 
 /* Free the current process's resources. */
