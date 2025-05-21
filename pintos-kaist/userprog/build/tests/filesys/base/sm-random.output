@@ -16,14 +16,24 @@ Executing 'sm-random':
 (sm-random) create "bazzle"
 (sm-random) open "bazzle"
 (sm-random) write "bazzle" in random order
-sm-random: exit(-1)
-Execution of 'sm-random' complete.
-Timer: 286 ticks
-Thread: 238 idle ticks, 41 kernel ticks, 8 user ticks
+Page fault at 0x423c050: not present error writing page in kernel context.
+Interrupt 0x0e (#PF Page-Fault Exception) at rip=800421ef9a
+ cr2=000000000423c050 error=               2
+rax 000000000423c048 rbx 0000000000000000 rcx 0000000000403dc2 rdx 00000000000000b6
+rsp 0000008004240ec0 rbp 0000008004240ed0 rsi 00000000000000b6 rdi 000000000423c048
+rip 000000800421ef9a r8 0000000000000000  r9 0000000000000000 r10 0000000000000000
+r11 0000000000000212 r12 000000800421d396 r13 0000000000000000 r14 0000000000000000
+r15 0000000000000000 rflags 00000202
+es: 001b ds: 001b cs: 0008 ss: 0010
+Kernel PANIC at ../../userprog/exception.c:97 in kill(): Kernel bug - unexpected interrupt in kernel
+Call stack: 0x800421861c 0x800421cf9d 0x800421d11c 0x80042093f8 0x8004209816 0x800421d75b 0x800421d4c0 0x800421d191 0x4002a4 0x401142 0x40118b.
+The `backtrace' program can make call stacks useful.
+Read "Backtraces" in the "Debugging Tools" chapter
+of the Pintos documentation for more information.
+Timer: 103 ticks
+Thread: 50 idle ticks, 37 kernel ticks, 16 user ticks
 hd0:0: 0 reads, 0 writes
 hd0:1: 109 reads, 264 writes
 hd1:0: 110 reads, 0 writes
-Console: 924 characters output
-Keyboard: 0 keys pressed
-Exception: 0 page faults
-Powering off...
+Console: 1856 characters output
+Key

@@ -7,10 +7,10 @@
 #include "userprog/gdt.h"
 #include "threads/flags.h"
 #include "intrinsic.h"
-
+#include "userprog/process.h"
 #include "threads/palloc.h"
 #include "threads/vaddr.h"
-
+#include "filesys/file.h"
 
 
 void syscall_entry (void);
@@ -119,15 +119,15 @@ int sys_number = f->R.rax;
         case SYS_WRITE:
             f->R.rax = write(f->R.rdi, f->R.rsi, f->R.rdx);
             break;
-        // case SYS_SEEK:
-        //     seek(f->R.rdi, f->R.rsi);
-        //     break;
-        // case SYS_TELL:
-        //     f->R.rax = tell(f->R.rdi);
-        //     break;
-        // case SYS_CLOSE:
-        //     close(f->R.rdi);
-        //     break;
+        case SYS_SEEK:
+            seek(f->R.rdi, f->R.rsi);
+            break;
+        case SYS_TELL:
+            f->R.rax = tell(f->R.rdi);
+            break;
+        case SYS_CLOSE:
+            close(f->R.rdi);
+            break;
         default:
             exit(-1);
     }
@@ -183,4 +183,43 @@ int open(const char *file) {
   
 	fdt[cur->fd_idx] = file;
 	return cur->fd_idx++;
+  }
+  
+
+
+// 파일 위치(offset)로 이동하는 함수
+void seek(int fd, unsigned position) {
+    struct file *f = process_get_file(fd);
+    if (f != NULL)
+        file_seek(f, position);  
+}
+
+int tell(int fd) {
+    struct file *f = process_get_file(fd);
+    if (f == NULL)
+        return 0;
+    return file_tell(f);  
+}
+// 열린 파일을 닫는 시스템 콜. 파일을 닫고 fd제거
+void close(int fd) {
+	struct file *fileobj = find_file_by_fd(fd);
+	if (fileobj == NULL) {
+		return;
+	}
+	remove_file_from_fdt(fd);
+}
+// fd에 해당하는 파일 포인터 반환
+struct file *process_get_file(int fd) {
+	struct thread *cur = thread_current();
+	if (fd < 0 || fd >= FDCOUNT_LIMIT)
+	  return NULL;
+	return cur->fd_table[fd];
+  }
+  
+  // fd_table에서 fd 슬롯 제거
+  void remove_file_from_fdt(int fd) {
+	struct thread *cur = thread_current();
+	if (fd < 0 || fd >= FDCOUNT_LIMIT)
+	  return;
+	cur->fd_table[fd] = NULL;
   }

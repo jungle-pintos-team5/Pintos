@@ -15,8 +15,8 @@ Executing 'exec-missing':
 (exec-missing) begin
 exec-missing: exit(-1)
 Execution of 'exec-missing' complete.
-Timer: 282 ticks
-Thread: 239 idle ticks, 41 kernel ticks, 3 user ticks
+Timer: 286 ticks
+Thread: 227 idle ticks, 55 kernel ticks, 5 user ticks
 hd0:0: 0 reads, 0 writes
 hd0:1: 80 reads, 234 writes
 hd1:0: 103 reads, 0 writes

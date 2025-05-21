@@ -18,8 +18,8 @@ Executing 'multi-child-fd':
 (multi-child-fd) open "sample.txt"
 multi-child-fd: exit(-1)
 Execution of 'multi-child-fd' complete.
-Timer: 302 ticks
-Thread: 255 idle ticks, 42 kernel ticks, 6 user ticks
+Timer: 301 ticks
+Thread: 252 idle ticks, 44 kernel ticks, 6 user ticks
 hd0:0: 0 reads, 0 writes
 hd0:1: 148 reads, 490 writes
 hd1:0: 221 reads, 0 writes

@@ -19,8 +19,8 @@ Executing 'sm-seq-block':
 (sm-seq-block) write 513 bytes at offset 0 in "noodle" failed: FAILED
 sm-seq-block: exit(1)
 Execution of 'sm-seq-block' complete.
-Timer: 284 ticks
-Thread: 233 idle ticks, 42 kernel ticks, 9 user ticks
+Timer: 283 ticks
+Thread: 234 idle ticks, 41 kernel ticks, 9 user ticks
 hd0:0: 0 reads, 0 writes
 hd0:1: 107 reads, 266 writes
 hd1:0: 107 reads, 0 writes

@@ -12,3 +12,6 @@ void process_activate (struct thread *next);
 /** project2-Command Line Parsing */
 void argument_stack(char **argv, int argc, struct intr_frame *if_);
 #endif /* userprog/process.h */
+
+struct file *process_get_file(int fd);
+void remove_file_from_fdt(int fd);

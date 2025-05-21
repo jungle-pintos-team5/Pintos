@@ -19,8 +19,8 @@ Executing 'sm-seq-random':
 (sm-seq-random) write 561 bytes at offset 0 in "nibble" failed: FAILED
 sm-seq-random: exit(1)
 Execution of 'sm-seq-random' complete.
-Timer: 288 ticks
-Thread: 233 idle ticks, 48 kernel ticks, 8 user ticks
+Timer: 287 ticks
+Thread: 237 idle ticks, 44 kernel ticks, 7 user ticks
 hd0:0: 0 reads, 0 writes
 hd0:1: 107 reads, 266 writes
 hd1:0: 107 reads, 0 writes
