@@ -59,6 +59,7 @@ void check_addr(void *vaddr){
 /* The main system call interface */
 void
 syscall_handler (struct intr_frame *f UNUSED) {
+	printf("systemcall");
 	switch (f->R.rax)
 	{
 	case SYS_HALT:
