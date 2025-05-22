@@ -54,6 +54,9 @@ process_create_initd (const char *file_name) {
 		return TID_ERROR;
 	strlcpy (fn_copy, file_name, PGSIZE);
 
+	char *save_ptr;
+    strtok_r(file_name, " ", &save_ptr);
+
 	/* Create a new thread to execute FILE_NAME. */
 	tid = thread_create (file_name, PRI_DEFAULT, initd, fn_copy);
 	if (tid == TID_ERROR)
@@ -192,11 +195,11 @@ process_exec (void *f_name) {
 	/* set up stack */
 	if (success){
 		set_stack_data(buffer, count, &_if.rsp);
+		_if.R.rdi = count;
+		_if.R.rsi = (void **)_if.rsp + 8;
 		// 스택에 값을 입력하기 위해서 는 오른쪽에서 왼쪽으로 이동 (LIFO)
 		hex_dump(_if.rsp, _if.rsp, USER_STACK - (uint64_t)_if.rsp, true);
 	}
-	_if.R.rdi = count;
-	_if.R.rsi = _if.rsp + 8;
 
 	/* If load failed, quit. */
 	palloc_free_page (file_name);
@@ -204,7 +207,7 @@ process_exec (void *f_name) {
 		return -1;
 
 	/* Start switched process. */
-	do_iret (&_if);
+	do_iret (&_if); // 여기서 wait이 걸린다...
 	NOT_REACHED ();
 }
 

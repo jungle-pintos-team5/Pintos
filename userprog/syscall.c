@@ -59,7 +59,7 @@ void check_addr(void *vaddr){
 /* The main system call interface */
 void
 syscall_handler (struct intr_frame *f UNUSED) {
-	printf("systemcall");
+	printf ("system call!\n");
 	switch (f->R.rax)
 	{
 	case SYS_HALT:
@@ -97,7 +97,6 @@ syscall_handler (struct intr_frame *f UNUSED) {
 		thread_exit ();
 		break;
 	}
-
 }
 
 void halt(void) {
@@ -127,3 +126,5 @@ bool create(const char *file, unsigned initial_size){
 	check_addr(file);
 	return filesys_create(file, initial_size);
 }
+
+
