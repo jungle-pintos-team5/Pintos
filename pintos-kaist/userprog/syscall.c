@@ -94,9 +94,9 @@ int sys_number = f->R.rax;
         // case SYS_FORK:
         //     f->R.rax = fork(f->R.rdi);
         //     break;
-        // case SYS_EXEC:
-        //     f->R.rax = exec(f->R.rdi);
-        //     break;
+        case SYS_EXEC:
+            f->R.rax = exec(f->R.rdi);
+            break;
         // case SYS_WAIT:
         //     f->R.rax = process_wait(f->R.rdi);
         //     break;
@@ -104,15 +104,15 @@ int sys_number = f->R.rax;
             f->R.rax = create(f->R.rdi, f->R.rsi);
             break;
 		
-        // case SYS_REMOVE:
-        //     f->R.rax = remove(f->R.rdi);
-        //     break;
+        case SYS_REMOVE:
+            f->R.rax = remove(f->R.rdi);
+            break;
         case SYS_OPEN:
             f->R.rax = open(f->R.rdi);
             break;
-        // case SYS_FILESIZE:
-        //     f->R.rax = filesize(f->R.rdi);
-        //     break;
+        case SYS_FILESIZE:
+            f->R.rax = filesize(f->R.rdi);
+            break;
         // case SYS_READ:
         //     f->R.rax = read(f->R.rdi, f->R.rsi, f->R.rdx);
         //     break;
@@ -223,3 +223,27 @@ struct file *process_get_file(int fd) {
 	  return;
 	cur->fd_table[fd] = NULL;
   }
+  // 파일 삭제하는 시스템 콜
+// 성공일 경우 true, 실패일 경우 false 리턴
+bool remove(const char *file) {			// file: 제거할 파일의 이름 및 경로 정보
+	check_address(file);
+	return filesys_remove(file);
+}
+// 현재 프로세스를 cmd_line에서 지정된 인수를 전달하여 이름이 지정된 실행 파일로 변경
+int exec(char *file_name) {
+	check_address(file_name);
+
+	int file_size = strlen(file_name)+1;
+	char *fn_copy = palloc_get_page(PAL_ZERO);
+	if (fn_copy == NULL) {
+		exit(-1);
+	}
+	strlcpy(fn_copy, file_name, file_size);
+
+	if (process_exec(fn_copy) == -1) {
+		return -1;
+	}
+
+	NOT_REACHED();
+	return 0;
+}

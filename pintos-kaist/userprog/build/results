@@ -40,8 +40,8 @@ FAIL tests/userprog/fork-recursive
 FAIL tests/userprog/fork-read
 FAIL tests/userprog/fork-close
 FAIL tests/userprog/fork-boundary
-FAIL tests/userprog/exec-once
-FAIL tests/userprog/exec-arg
+pass tests/userprog/exec-once
+pass tests/userprog/exec-arg
 FAIL tests/userprog/exec-boundary
 FAIL tests/userprog/exec-missing
 pass tests/userprog/exec-bad-ptr
@@ -77,7 +77,7 @@ FAIL tests/filesys/base/syn-write
 FAIL tests/userprog/no-vm/multi-oom
 pass tests/threads/alarm-single
 pass tests/threads/alarm-multiple
-pass tests/threads/alarm-simultaneous
+FAIL tests/threads/alarm-simultaneous
 pass tests/threads/alarm-priority
 pass tests/threads/alarm-zero
 pass tests/threads/alarm-negative

@@ -17,8 +17,8 @@ Executing 'read-zero':
 (read-zero) open "sample.txt"
 read-zero: exit(-1)
 Execution of 'read-zero' complete.
-Timer: 286 ticks
-Thread: 236 idle ticks, 44 kernel ticks, 7 user ticks
+Timer: 292 ticks
+Thread: 239 idle ticks, 45 kernel ticks, 9 user ticks
 hd0:0: 0 reads, 0 writes
 hd0:1: 111 reads, 250 writes
 hd1:0: 106 reads, 0 writes

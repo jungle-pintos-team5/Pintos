@@ -1,19 +1,4 @@
 FAIL
-Test output failed to match any acceptable form.
-
-Acceptable output:
-  (sm-create) begin
-  (sm-create) create "blargle"
-  (sm-create) open "blargle" for verification
-  (sm-create) verified contents of "blargle"
-  (sm-create) close "blargle"
-  (sm-create) end
-Differences in `diff -u' format:
-  (sm-create) begin
-  (sm-create) create "blargle"
-  (sm-create) open "blargle" for verification
-- (sm-create) verified contents of "blargle"
-- (sm-create) close "blargle"
-- (sm-create) end
-
-(Process exit codes are excluded for matching purposes.)
+Kernel panic in run: PANIC at ../../userprog/exception.c:97 in kill(): Kernel bug - unexpected interrupt in kernel
+Call stack: 0x800421861c 0x800421cf9d 0x800421d11c 0x80042093f8 0x8004209816 0x800421d34e 0x800421d4c3 0x800421d191 0x40075b 0x400976 0x400183 0x400e6c 0x400eb5
+Translation of call stack:

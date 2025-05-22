@@ -18,7 +18,7 @@ Executing 'fork-read':
 fork-read: exit(-1)
 Execution of 'fork-read' complete.
 Timer: 286 ticks
-Thread: 241 idle ticks, 40 kernel ticks, 6 user ticks
+Thread: 239 idle ticks, 41 kernel ticks, 6 user ticks
 hd0:0: 0 reads, 0 writes
 hd0:1: 115 reads, 262 writes
 hd1:0: 112 reads, 0 writes

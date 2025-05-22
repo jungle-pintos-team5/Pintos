@@ -16,14 +16,16 @@ Executing 'syn-remove':
 (syn-remove) create "deleteme"
 (syn-remove) open "deleteme"
 (syn-remove) remove "deleteme"
-syn-remove: exit(-1)
+(syn-remove) write "deleteme"
+(syn-remove) write "deleteme": FAILED
+syn-remove: exit(1)
 Execution of 'syn-remove' complete.
-Timer: 284 ticks
-Thread: 236 idle ticks, 42 kernel ticks, 7 user ticks
+Timer: 285 ticks
+Thread: 231 idle ticks, 45 kernel ticks, 10 user ticks
 hd0:0: 0 reads, 0 writes
-hd0:1: 108 reads, 261 writes
+hd0:1: 112 reads, 262 writes
 hd1:0: 109 reads, 0 writes
-Console: 925 characters output
+Console: 993 characters output
 Keyboard: 0 keys pressed
 Exception: 0 page faults
 Powering off...
