@@ -16,7 +16,7 @@ Executing 'fork-recursive':
 fork-recursive: exit(-1)
 Execution of 'fork-recursive' complete.
 Timer: 283 ticks
-Thread: 236 idle ticks, 42 kernel ticks, 6 user ticks
+Thread: 239 idle ticks, 39 kernel ticks, 6 user ticks
 hd0:0: 0 reads, 0 writes
 hd0:1: 87 reads, 236 writes
 hd1:0: 104 reads, 0 writes

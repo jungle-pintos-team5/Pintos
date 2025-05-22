@@ -270,7 +270,7 @@ void argument_stack(char **argv, int argc, struct intr_frame *if_){
 /* Switch the current execution context to the f_name.
  * Returns -1 on fail. */
 int
-process_exec (void *f_name) {
+process_exec(void *f_name) {
 	char *file_name = f_name;
 	bool success;
 
@@ -283,37 +283,48 @@ process_exec (void *f_name) {
 	_if.eflags = FLAG_IF | FLAG_MBS;
 
 	/* We first kill the current context */
-	process_cleanup ();
-	
+	process_cleanup();
+
+	/** ✅ 복사본 생성 (load에 안전하게 넘기기 위해) */
+	char *file_name_copy = palloc_get_page(PAL_ZERO);
+	if (file_name_copy == NULL)
+		exit(-1);
+	strlcpy(file_name_copy, file_name, PGSIZE);
+
 	/** project2-Command Line Parsing */
 	char *ptr, *arg;
-    int arg_cnt = 0;
-    char *arg_list[32];
+	int arg_cnt = 0;
+	char *arg_list[32];
 
-    for (arg = strtok_r(file_name, " ", &ptr); arg != NULL; arg = strtok_r(NULL, " ", &ptr))
-        arg_list[arg_cnt++] = arg;
+	for (arg = strtok_r(file_name, " ", &ptr); arg != NULL; arg = strtok_r(NULL, " ", &ptr))
+		arg_list[arg_cnt++] = arg;
 
-	/* And then load the binary */
-	success = load (file_name, &_if);
+	/** ✅ 복사본에서 첫 번째 토큰 추출해서 load에 넘김 */
+	char *program = strtok_r(file_name_copy, " ", &ptr);
+	success = load(program, &_if);
 
-	/** project2-Command Line Parsing */
-	argument_stack(arg_list, arg_cnt, &_if);
-	
 	/* If load failed, quit. */
-	palloc_free_page (file_name);
-	if (!success)
+	if (!success) {
+		palloc_free_page(file_name_copy);
 		return -1;
+	}
 
-	// hex_dump(_if.rsp, _if.rsp, USER_STACK - _if.rsp, true); // 0x47480000	
+	/** 스택 세팅 */
+	argument_stack(arg_list, arg_cnt, &_if);
+
+	/** 복사한 파일 이름 해제 */
+	palloc_free_page(file_name_copy);
+
+	/** fd_table 초기화 */
 	struct thread *cur = thread_current();
 	cur->fd_table = palloc_get_page(PAL_ZERO);
 	if (cur->fd_table == NULL)
-  		exit(-1);
-
+		exit(-1);
 	cur->fd_idx = 2;
+
 	/* Start switched process. */
-	do_iret (&_if);
-	NOT_REACHED ();
+	do_iret(&_if);
+	NOT_REACHED();
 }
 
 static bool

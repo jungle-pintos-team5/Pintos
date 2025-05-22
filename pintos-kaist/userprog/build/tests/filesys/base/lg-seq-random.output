@@ -19,8 +19,8 @@ Executing 'lg-seq-random':
 (lg-seq-random) write 753 bytes at offset 0 in "nibble" failed: FAILED
 lg-seq-random: exit(1)
 Execution of 'lg-seq-random' complete.
-Timer: 290 ticks
-Thread: 234 idle ticks, 46 kernel ticks, 11 user ticks
+Timer: 288 ticks
+Thread: 227 idle ticks, 51 kernel ticks, 11 user ticks
 hd0:0: 0 reads, 0 writes
 hd0:1: 107 reads, 402 writes
 hd1:0: 107 reads, 0 writes

@@ -77,7 +77,7 @@ FAIL tests/filesys/base/syn-write
 FAIL tests/userprog/no-vm/multi-oom
 pass tests/threads/alarm-single
 pass tests/threads/alarm-multiple
-FAIL tests/threads/alarm-simultaneous
+pass tests/threads/alarm-simultaneous
 pass tests/threads/alarm-priority
 pass tests/threads/alarm-zero
 pass tests/threads/alarm-negative

@@ -17,21 +17,21 @@ Executing 'lg-random':
 (lg-random) open "bazzle"
 (lg-random) write "bazzle" in random order
 Page fault at 0x423c050: not present error writing page in kernel context.
-Interrupt 0x0e (#PF Page-Fault Exception) at rip=800421f12e
+Interrupt 0x0e (#PF Page-Fault Exception) at rip=800421f1b5
  cr2=000000000423c050 error=               2
 rax 000000000423c048 rbx 0000000000000000 rcx 0000000000403dc8 rdx 000000000000bc00
 rsp 0000008004240ec0 rbp 0000008004240ed0 rsi 000000000000bc00 rdi 000000000423c048
-rip 000000800421f12e r8 0000000000000000  r9 0000000000000000 r10 0000000000000000
-r11 0000000000000212 r12 000000800421d396 r13 0000000000000000 r14 0000000000000000
+rip 000000800421f1b5 r8 0000000000000000  r9 0000000000000000 r10 0000000000000000
+r11 0000000000000212 r12 000000800421d41d r13 0000000000000000 r14 0000000000000000
 r15 0000000000000000 rflags 00000206
 es: 001b ds: 001b cs: 0008 ss: 0010
 Kernel PANIC at ../../userprog/exception.c:97 in kill(): Kernel bug - unexpected interrupt in kernel
-Call stack: 0x800421861c 0x800421cf9d 0x800421d11c 0x80042093f8 0x8004209816 0x800421d7d4 0x800421d539 0x800421d191 0x4002a2 0x401148 0x401191.
+Call stack: 0x800421861c 0x800421d024 0x800421d1a3 0x80042093f8 0x8004209816 0x800421d85b 0x800421d5c0 0x800421d218 0x4002a2 0x401148 0x401191.
 The `backtrace' program can make call stacks useful.
 Read "Backtraces" in the "Debugging Tools" chapter
 of the Pintos documentation for more information.
-Timer: 128 ticks
-Thread: 60 idle ticks, 40 kernel ticks, 28 user ticks
+Timer: 113 ticks
+Thread: 59 idle ticks, 36 kernel ticks, 18 user ticks
 hd0:0: 0 reads, 0 writes
 hd0:1: 109 reads, 410 writes
 hd1:0: 110 reads, 0 writes

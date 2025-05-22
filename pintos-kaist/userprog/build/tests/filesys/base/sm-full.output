@@ -19,8 +19,8 @@ Executing 'sm-full':
 (sm-full) write 5678 bytes at offset 0 in "quux" failed: FAILED
 sm-full: exit(1)
 Execution of 'sm-full' complete.
-Timer: 284 ticks
-Thread: 233 idle ticks, 41 kernel ticks, 11 user ticks
+Timer: 285 ticks
+Thread: 234 idle ticks, 41 kernel ticks, 11 user ticks
 hd0:0: 0 reads, 0 writes
 hd0:1: 107 reads, 266 writes
 hd1:0: 107 reads, 0 writes
