@@ -190,15 +190,15 @@ process_exec (void *f_name) {
 	process_cleanup ();
 
 	/* And then load the binary */
-	success = load (buffer[0], &_if);
+	success = load (file_name, &_if);
 
 	/* set up stack */
 	if (success){
 		set_stack_data(buffer, count, &_if.rsp);
 		_if.R.rdi = count;
-		_if.R.rsi = (void **)_if.rsp + 8;
+		_if.R.rsi = (char *)_if.rsp + 8;
 		// 스택에 값을 입력하기 위해서 는 오른쪽에서 왼쪽으로 이동 (LIFO)
-		hex_dump(_if.rsp, _if.rsp, USER_STACK - (uint64_t)_if.rsp, true);
+		// hex_dump(_if.rsp, _if.rsp, USER_STACK - (uint64_t)_if.rsp, true);
 	}
 
 	/* If load failed, quit. */
@@ -228,15 +228,15 @@ void set_stack_data (char **parse_data, int count, void **rsp){
 	}
 
 	(*rsp) -= 8;
-	**(char **)rsp = 0;
+	**(char ***)rsp = 0;
 
 	for(int i = count -1; i >= 0; i--){
 		(*rsp) -= 8;
-		**(char **)rsp = parse_data[i];
+		**(char ***)rsp = parse_data[i];
 	}
 
 	(*rsp) -= 8;
-	**(char **)rsp = 0;
+	**(char ***)rsp = 0;
 }
 
 
