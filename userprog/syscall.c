@@ -129,7 +129,7 @@ bool create(const char *file, unsigned initial_size){
 	return filesys_create(file, initial_size);
 }
 
-bool remove(const char *file){
+bool remove (const char *file){
 	check_addr(file);
 	return filesys_remove (file);
 }
@@ -146,7 +146,7 @@ int allocate_fd(struct file *f){
 
 int open(const char *file){
 	check_addr(file);
-	struct file * open_f = filesys_open(file);
+	struct file *open_f = filesys_open(file);
 	return allocate_fd(open_f);
 }
 
