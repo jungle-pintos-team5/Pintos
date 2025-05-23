@@ -9,6 +9,7 @@
 #include "intrinsic.h"
 #include "filesys/filesys.h"
 #include "filesys/file.h"
+#include "devices/input.h"
 
 void syscall_entry (void);
 void syscall_handler (struct intr_frame *);
@@ -84,6 +85,7 @@ syscall_handler (struct intr_frame *f UNUSED) {
 	case SYS_FILESIZE:
 		break;
 	case SYS_READ:
+		f->R.rax = read(f->R.rdi, f->R.rsi, f->R.rdx);
 		break;
 	case SYS_WRITE:
 			f->R.rax = write(f->R.rdi, f->R.rsi, f->R.rdx);
@@ -159,4 +161,26 @@ struct file *find_file(int fd){
 int filesize(int fd){
 	struct file * file = find_file(fd);
 	return file_length(file);
+}
+
+int read(int fd, void *buffer, unsigned size){
+	uint8_t *buff = buffer;
+	if (fd > 64){
+		exit(-1);
+	}
+
+	if (fd == 0){
+		int i;
+
+		for(i = 0; i < size; i++){
+			buff[i] = input_getc();
+			if(buff[i] == '\0'){
+				break;
+			}
+		}
+		return i;
+	}
+
+	struct file *find_f = find_file(fd);	
+	return file_read (find_f, buff, size);
 }
