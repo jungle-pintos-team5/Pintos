@@ -206,6 +206,13 @@ thread_create (const char *name, int priority,
 	t->tf.ss = SEL_KDSEG;
 	t->tf.cs = SEL_KCSEG;
 	t->tf.eflags = FLAG_IF;
+	#ifdef USERPROG
+		/** fd_table 초기화 */
+		t->fd_table = palloc_get_page(PAL_ZERO);
+		if (t->fd_table == NULL)
+			exit(-1);
+		t->fd_idx = 2;
+	#endif
 	/* Add to run queue. */
 	thread_unblock (t);
 	if(thread_current()->priority<priority){

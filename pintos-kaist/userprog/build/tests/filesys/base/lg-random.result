@@ -1,4 +1,0 @@
-FAIL
-Kernel panic in run: PANIC at ../../userprog/exception.c:97 in kill(): Kernel bug - unexpected interrupt in kernel
-Call stack: 0x800421861c 0x800421d024 0x800421d1a3 0x80042093f8 0x8004209816 0x800421d85b 0x800421d5c0 0x800421d218 0x4002a2 0x401148 0x401191
-Translation of call stack:

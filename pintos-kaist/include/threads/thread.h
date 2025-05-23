@@ -185,9 +185,7 @@ void all_recal_r(void);
 #endif /* threads/thread.h */
 #define USERPROG 
 #ifdef USERPROG
-	/* Owned by userprog/process.c. */
-	// uint64_t *pml4;                     /* Page map level 4 */
-	// struct file **fd_table;  // 파일 디스크립터 테이블
+
 	/** project2-System Call */
 	int exit_status;
 #endif

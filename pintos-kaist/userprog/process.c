@@ -285,7 +285,7 @@ process_exec(void *f_name) {
 	/* We first kill the current context */
 	process_cleanup();
 
-	/** ✅ 복사본 생성 (load에 안전하게 넘기기 위해) */
+	/**  복사본 생성 (load에 안전하게 넘기기 위해) */
 	char *file_name_copy = palloc_get_page(PAL_ZERO);
 	if (file_name_copy == NULL)
 		exit(-1);
@@ -299,7 +299,7 @@ process_exec(void *f_name) {
 	for (arg = strtok_r(file_name, " ", &ptr); arg != NULL; arg = strtok_r(NULL, " ", &ptr))
 		arg_list[arg_cnt++] = arg;
 
-	/** ✅ 복사본에서 첫 번째 토큰 추출해서 load에 넘김 */
+	/**  복사본에서 첫 번째 토큰 추출해서 load에 넘김 */
 	char *program = strtok_r(file_name_copy, " ", &ptr);
 	success = load(program, &_if);
 
@@ -315,12 +315,6 @@ process_exec(void *f_name) {
 	/** 복사한 파일 이름 해제 */
 	palloc_free_page(file_name_copy);
 
-	/** fd_table 초기화 */
-	struct thread *cur = thread_current();
-	cur->fd_table = palloc_get_page(PAL_ZERO);
-	if (cur->fd_table == NULL)
-		exit(-1);
-	cur->fd_idx = 2;
 
 	/* Start switched process. */
 	do_iret(&_if);

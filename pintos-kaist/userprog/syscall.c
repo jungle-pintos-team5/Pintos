@@ -12,9 +12,12 @@
 #include "threads/vaddr.h"
 #include "filesys/file.h"
 
+#include "threads/synch.h"
 
 void syscall_entry (void);
 void syscall_handler (struct intr_frame *);
+int read(int fd, void *buffer, unsigned size);
+
 
 /* System call.
  *
@@ -28,6 +31,7 @@ void syscall_handler (struct intr_frame *);
 #define MSR_STAR 0xc0000081         /* Segment selector msr */
 #define MSR_LSTAR 0xc0000082        /* Long mode SYSCALL target */
 #define MSR_SYSCALL_MASK 0xc0000084 /* Mask for the eflags */
+struct lock filesys_lock;  // 파일 읽기/쓰기 용 lock
 
 void
 syscall_init (void) {
@@ -40,6 +44,8 @@ syscall_init (void) {
 	 * mode stack. Therefore, we masked the FLAG_FL. */
 	write_msr(MSR_SYSCALL_MASK,
 			FLAG_IF | FLAG_TF | FLAG_DF | FLAG_IOPL | FLAG_AC | FLAG_NT);
+    
+
 }
 
 
@@ -48,7 +54,7 @@ syscall_init (void) {
 void check_address(const void *addr)
 {
   struct thread *cur = thread_current();
-  if (addr == NULL || !(is_user_vaddr(addr)) || pml4_get_page(cur->pml4, addr) == NULL)
+  if (addr == NULL || is_kernel_vaddr(addr) || pml4_get_page(cur->pml4, addr) == NULL)
     exit(-1);
 	
 }
@@ -113,9 +119,9 @@ int sys_number = f->R.rax;
         case SYS_FILESIZE:
             f->R.rax = filesize(f->R.rdi);
             break;
-        // case SYS_READ:
-        //     f->R.rax = read(f->R.rdi, f->R.rsi, f->R.rdx);
-        //     break;
+        case SYS_READ:
+            f->R.rax = read(f->R.rdi, f->R.rsi, f->R.rdx);
+            break;
         case SYS_WRITE:
             f->R.rax = write(f->R.rdi, f->R.rsi, f->R.rdx);
             break;
@@ -160,7 +166,6 @@ int write(int fd, const void *buffer, unsigned size)
 }
 int open(const char *file) {
 	check_address(file);  // ← 반드시 제일 먼저
-  
 	struct file *open_file = filesys_open(file);
 	if (open_file == NULL)
 	  return -1;
@@ -174,15 +179,23 @@ int open(const char *file) {
   int add_file_to_fdt(struct file *file) {
 	struct thread *cur = thread_current();
 	struct file **fdt = cur->fd_table;
+	// while (i< FDCOUNT_LIMIT && fdt[i])
+	//   i++;
   
-	while (cur->fd_idx < FDCOUNT_LIMIT && fdt[cur->fd_idx])
-	  cur->fd_idx++;
+	// if (cur->fd_idx >= FDCOUNT_LIMIT)
+	//   return -1;
   
-	if (cur->fd_idx >= FDCOUNT_LIMIT)
-	  return -1;
-  
-	fdt[cur->fd_idx] = file;
-	return cur->fd_idx++;
+	// fdt[cur->fd_idx] = file;
+	// return cur->fd_idx++;
+  // }
+  for(int i = 2;i < cur->fd_idx;i++){
+    if(fdt[i] == NULL){
+      fdt[i] = file;
+      return i;
+    }
+  }
+  fdt[cur->fd_idx] = file;
+  return cur->fd_idx++;
   }
   
 
@@ -211,7 +224,7 @@ void close(int fd) {
 // fd에 해당하는 파일 포인터 반환
 struct file *process_get_file(int fd) {
 	struct thread *cur = thread_current();
-	if (fd < 0 || fd >= FDCOUNT_LIMIT)
+	if (fd < 0 || fd >= cur->fd_idx)
 	  return NULL;
 	return cur->fd_table[fd];
   }
@@ -246,4 +259,34 @@ int exec(char *file_name) {
 
 	NOT_REACHED();
 	return 0;
+}
+int read(int fd, void *buffer, unsigned size) {
+	check_address(buffer);  // 네 기존 함수 계속 씀
+
+
+	if (fd == 1 || fd == 2)
+		return -1;
+
+	if (fd == 0) {
+		uint8_t *buf = buffer;
+		unsigned i;
+		for (i = 0; i < size; i++) {
+
+			buf[i] = input_getc();
+			
+			if (buf[i] == '\0')
+				break;
+		}
+		return i;
+	}
+
+	struct file *f = process_get_file(fd);
+	if (f == NULL)
+		return -1;
+
+	lock_acquire(&filesys_lock);  // 네가 쓰는 락 이름
+	int result = file_read(f, buffer, size);
+	lock_release(&filesys_lock);
+
+	return result;
 }
