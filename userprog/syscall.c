@@ -8,6 +8,7 @@
 #include "threads/flags.h"
 #include "intrinsic.h"
 #include "filesys/filesys.h"
+#include "filesys/file.h"
 
 void syscall_entry (void);
 void syscall_handler (struct intr_frame *);
@@ -59,7 +60,7 @@ void check_addr(void *vaddr){
 /* The main system call interface */
 void
 syscall_handler (struct intr_frame *f UNUSED) {
-	printf ("system call!\n");
+
 	switch (f->R.rax)
 	{
 	case SYS_HALT:
@@ -76,6 +77,7 @@ syscall_handler (struct intr_frame *f UNUSED) {
 		f->R.rax = create(f->R.rdi, f->R.rsi);
 		break;
 	case SYS_REMOVE:
+		f->R.rax = remove(f->R.rdi);
 		break;
 	case SYS_OPEN:
 		break;
@@ -107,7 +109,7 @@ void exit(int status){
 	struct thread *cur = thread_current();
     cur->exit_status = status;
 
-	printf("%s: exit[%d]\n", thread_name(), status); 
+	printf("%s: exit(%d)\n", thread_name(), status); 
 	thread_exit();	
 }
 
@@ -131,3 +133,24 @@ bool remove(const char *file){
 	check_addr(file);
 	return filesys_remove (file);
 }
+
+int allocate_fd(struct file *f){
+	struct thread *t = thread_current();
+	if (f == NULL || t->next_fd >= 64){
+		return -1;
+	}
+
+	t->fdt[t->next_fd] = f;
+	return t->next_fd++;
+}
+
+int open(const char *file){
+	check_addr(file);
+	struct file * open_f = filesys_open(file);
+	return allocate_fd(open_f);
+}
+
+// int filesize(int fd){
+
+// 	return file_length();
+// }

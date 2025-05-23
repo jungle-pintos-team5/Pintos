@@ -98,7 +98,7 @@ struct thread {
 	int priority;                       /* Priority. */
 	int64_t weakeup_tick;				/* wake up time (깨어나야 할 시간) */
 
-int exit_status;
+	int exit_status;
 
 	/* Shared between thread.c and synch.c. */
 	struct list_elem elem;              /* List element. */
@@ -113,6 +113,10 @@ int exit_status;
 	int niceness;
 	int recent_cpu;
 	struct list_elem all_elem; /** project1-Advanced Scheduler */
+
+	/* file descripter */
+	struct file **fdt[64];
+	int next_fd;
 	
 #ifdef USERPROG
 	/* Owned by userprog/process.c. */

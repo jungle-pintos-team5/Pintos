@@ -3,8 +3,6 @@
 #include "threads/thread.h"
 
 void syscall_init (void);
-int write(int fd, const void *buffer, unsigned size);
-bool create(const char *file, unsigned initial_size);
-bool remove(const char *file);
+int allocate_fd(struct file *f);
 
 #endif /* userprog/syscall.h */
