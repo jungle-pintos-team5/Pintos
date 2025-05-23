@@ -164,6 +164,8 @@ int filesize(int fd){
 }
 
 int read(int fd, void *buffer, unsigned size){
+	check_addr(buffer);
+	
 	uint8_t *buff = buffer;
 	if (fd > 64){
 		exit(-1);
