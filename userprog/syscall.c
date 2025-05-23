@@ -150,7 +150,13 @@ int open(const char *file){
 	return allocate_fd(open_f);
 }
 
-// int filesize(int fd){
+struct file *find_file(int fd){
+	struct thread *t = thread_current();
+	struct file *find_f = t->fdt[fd];
+	return find_f;
+}
 
-// 	return file_length();
-// }
+int filesize(int fd){
+	struct file * file = find_file(fd);
+	return file_length(file);
+}
