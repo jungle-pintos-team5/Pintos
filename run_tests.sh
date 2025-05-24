@@ -4,7 +4,7 @@
 # mkdir -p "$LOG_DIR"
 
 # 테스트 목록을 배열로 정의
-test_case=("read-normal")
+test_case=("write-normal")
 
 # 각 테스트 파일에 대해 반복
 source ./activate

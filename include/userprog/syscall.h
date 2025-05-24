@@ -3,6 +3,7 @@
 #include "threads/thread.h"
 
 void syscall_init (void);
+struct file *find_file(int fd);
 void check_addr(void *vaddr);
 void halt(void);
 void exit(int status);

@@ -10,6 +10,7 @@
 #include "filesys/filesys.h"
 #include "filesys/file.h"
 #include "devices/input.h"
+#include "lib/kernel/stdio.h"
 
 void syscall_entry (void);
 void syscall_handler (struct intr_frame *);
@@ -61,45 +62,46 @@ void check_addr(void *vaddr){
 /* The main system call interface */
 void
 syscall_handler (struct intr_frame *f UNUSED) {
-
+	
+	// rdi -> rsi -> rdx -> r10 -> r8 -> r9
 	switch (f->R.rax)
 	{
-	case SYS_HALT:
+		case SYS_HALT:
 			halt(); // 핀토스 종료
-		break;
-	case SYS_EXIT:
+			break;
+		case SYS_EXIT:
 			exit(f->R.rdi);	// 프로세스 종료
-		break;
-	case SYS_FORK:
-		break;
-	case SYS_EXEC:
-		break;
-	case SYS_CREATE:
-		f->R.rax = create(f->R.rdi, f->R.rsi);
-		break;
-	case SYS_REMOVE:
-		f->R.rax = remove(f->R.rdi);
-		break;
-	case SYS_OPEN:
-		break;
-	case SYS_FILESIZE:
-		break;
-	case SYS_READ:
-		f->R.rax = read(f->R.rdi, f->R.rsi, f->R.rdx);
-		break;
-	case SYS_WRITE:
+			break;
+		case SYS_FORK:
+			break;
+		case SYS_EXEC:
+			break;
+		case SYS_CREATE:
+			f->R.rax = create(f->R.rdi, f->R.rsi);
+			break;
+		case SYS_REMOVE:
+			f->R.rax = remove(f->R.rdi);
+			break;
+		case SYS_OPEN:
+			break;
+		case SYS_FILESIZE:
+			break;
+		case SYS_READ:
+			f->R.rax = read(f->R.rdi, f->R.rsi, f->R.rdx);
+			break;
+		case SYS_WRITE:
 			f->R.rax = write(f->R.rdi, f->R.rsi, f->R.rdx);
-		break;
-	case SYS_SEEK:
-		break;
-	case SYS_TELL:
-		break;
-	case SYS_CLOSE:
-		break;
-	default:
-		printf ("system call!\n");
-		thread_exit ();
-		break;
+			break;
+		case SYS_SEEK:
+			break;
+		case SYS_TELL:
+			break;
+		case SYS_CLOSE:
+			break;
+		default:
+			// printf ("system call!\n");
+			thread_exit ();
+			break;
 	}
 }
 
@@ -116,14 +118,19 @@ void exit(int status){
 }
 
 int write (int fd, const void *buffer, unsigned size) {
-  // fd가 1이면 표준 출력
-  if (fd == 1) {
-    // putbuf: 커널 콘솔에 buffer의 내용을 size만큼 출력
-    putbuf(buffer, size);
-    return size;  // 출력한 바이트 수 반환
-  }
+	check_addr(buffer);
 
-  return -1;
+	if (fd > 64 || size == 0){
+		exit(-1);
+	}
+	// fd가 1이면 표준 출력
+	if ((fd == 1)) {
+		// putbuf: 커널 콘솔에 buffer의 내용을 size만큼 출력
+		putbuf(buffer, size);
+		return size;  // 출력한 바이트 수 반환
+	}
+	struct file *find_f = find_file(fd);
+	return file_write (find_f, buffer, size);
 }
 
 bool create(const char *file, unsigned initial_size){
@@ -148,6 +155,7 @@ int allocate_fd(struct file *f){
 
 int open(const char *file){
 	check_addr(file);
+
 	struct file *open_f = filesys_open(file);
 	return allocate_fd(open_f);
 }
