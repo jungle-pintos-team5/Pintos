@@ -13,5 +13,8 @@ bool remove (const char *file);
 int open(const char *file);
 int allocate_fd(struct file *f);
 void close(int fd);
+void seek(int fd, unsigned position);
+unsigned tell(int fd);
+int filesize(int fd);
 
 #endif /* userprog/syscall.h */

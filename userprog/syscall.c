@@ -83,8 +83,10 @@ syscall_handler (struct intr_frame *f UNUSED) {
 			f->R.rax = remove(f->R.rdi);
 			break;
 		case SYS_OPEN:
+			f->R.rax = open(f->R.rdi);
 			break;
 		case SYS_FILESIZE:
+			f->R.rax = filesize(f->R.rdi);
 			break;
 		case SYS_READ:
 			f->R.rax = read(f->R.rdi, f->R.rsi, f->R.rdx);
@@ -93,10 +95,13 @@ syscall_handler (struct intr_frame *f UNUSED) {
 			f->R.rax = write(f->R.rdi, f->R.rsi, f->R.rdx);
 			break;
 		case SYS_SEEK:
+			seek(f->R.rdi, f->R.rsi);
 			break;
 		case SYS_TELL:
+			f->R.rax = tell(f->R.rdi);
 			break;
 		case SYS_CLOSE:
+			close(f->R.rdi);
 			break;
 		default:
 			// printf ("system call!\n");
@@ -124,11 +129,12 @@ int write (int fd, const void *buffer, unsigned size) {
 		exit(-1);
 	}
 	// fd가 1이면 표준 출력
-	if ((fd == 1)) {
+	if (fd == 1) {
 		// putbuf: 커널 콘솔에 buffer의 내용을 size만큼 출력
 		putbuf(buffer, size);
 		return size;  // 출력한 바이트 수 반환
 	}
+
 	struct file *find_f = find_file(fd);
 	return file_write (find_f, buffer, size);
 }
@@ -146,6 +152,16 @@ bool remove (const char *file){
 int allocate_fd(struct file *f){
 	struct thread *t = thread_current();
 	if (f == NULL || t->next_fd >= 64){
+		return -1;
+	}
+
+	if(t->next_fd >= 3){
+		for(int i = 3; i<64; i++){
+			if(t->fdt[i] == NULL){
+				t->fdt[i] = f;
+				return i;
+			}
+		}
 		return -1;
 	}
 
@@ -199,7 +215,25 @@ void close(int fd){
 	if (fd > 64){
 		exit(-1);
 	}
-	
+
 	struct file *find_f = find_file(fd);
 	file_close(find_f);
+}
+
+void seek(int fd, unsigned position){
+	if(fd > 64){
+		exit(-1);
+	}
+
+	struct file *find_f = find_file(fd);
+	file_seek (find_f, position);
+}
+
+unsigned tell(int fd){
+	if(fd > 64){
+		exit(-1);
+	}
+
+	struct file *find_f = find_file(fd);
+	return file_tell(find_f);
 }
