@@ -194,3 +194,12 @@ int read(int fd, void *buffer, unsigned size){
 	struct file *find_f = find_file(fd);	
 	return file_read (find_f, buff, size);
 }
+
+void close(int fd){
+	if (fd > 64){
+		exit(-1);
+	}
+	
+	struct file *find_f = find_file(fd);
+	file_close(find_f);
+}

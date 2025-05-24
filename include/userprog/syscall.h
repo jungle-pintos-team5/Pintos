@@ -12,5 +12,6 @@ bool create(const char *file, unsigned initial_size);
 bool remove (const char *file);
 int open(const char *file);
 int allocate_fd(struct file *f);
+void close(int fd);
 
 #endif /* userprog/syscall.h */
