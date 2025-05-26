@@ -20,6 +20,7 @@
 #include "lib/string.h"
 #include "lib/stdio.h"
 #include "intrinsic.h"
+#include "threads/synch.h"
 #ifdef VM
 #include "vm/vm.h"
 #endif
@@ -207,7 +208,7 @@ process_exec (void *f_name) {
 		return -1;
 
 	/* Start switched process. */
-	do_iret (&_if); // 여기서 wait이 걸린다...
+	do_iret (&_if); 
 	NOT_REACHED ();
 }
 
@@ -239,6 +240,16 @@ void set_stack_data (char **parse_data, int count, void **rsp){
 	**(char ***)rsp = 0;
 }
 
+struct thread *get_child(pid_t pid){
+	struct thread *cur = thread_current();
+	struct thread *t;
+	struct list_elem *e;
+
+	for (e = list_begin(&cur->child_list); e != list_end(&cur->child_list); e = list_next(e)){
+		t = list_entry(e, struct thread, child_elem);
+	}
+}
+
 
 /* Waits for thread TID to die and returns its exit status.  If
  * it was terminated by the kernel (i.e. killed due to an
@@ -255,9 +266,10 @@ process_wait (tid_t child_tid UNUSED) {
 	 * XXX:       to add infinite loop here before
 	 * XXX:       implementing the process_wait. */
 	while (1){
-		int data = 1;
+	
 	}
-	return -1;
+	// struct thread *child = get_child(child_tid);
+	// return -1;
 }
 
 /* Exit the process. This function is called by thread_exit (). */

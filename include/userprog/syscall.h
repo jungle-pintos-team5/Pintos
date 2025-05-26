@@ -1,6 +1,7 @@
 #ifndef USERPROG_SYSCALL_H
 #define USERPROG_SYSCALL_H
 #include "threads/thread.h"
+#include "lib/user/syscall.h"
 
 void syscall_init (void);
 struct file *find_file(int fd);
@@ -16,5 +17,8 @@ void close(int fd);
 void seek(int fd, unsigned position);
 unsigned tell(int fd);
 int filesize(int fd);
+pid_t fork(const char *thread_name);
+int exec(const char *cmd_line);
+int wait(pid_t pid);
 
 #endif /* userprog/syscall.h */

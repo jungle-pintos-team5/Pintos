@@ -117,6 +117,10 @@ struct thread {
 	/* file descripter */
 	struct file **fdt[64];
 	int next_fd;
+
+	/* userprog - system Call */
+	struct list child_list;
+	struct list_elem child_elem;
 	
 #ifdef USERPROG
 	/* Owned by userprog/process.c. */

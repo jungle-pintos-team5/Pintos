@@ -11,6 +11,9 @@
 #include "filesys/file.h"
 #include "devices/input.h"
 #include "lib/kernel/stdio.h"
+#include "lib/string.h"
+#include "userprog/process.h"
+#include "threads/palloc.h"
 
 void syscall_entry (void);
 void syscall_handler (struct intr_frame *);
@@ -73,8 +76,10 @@ syscall_handler (struct intr_frame *f UNUSED) {
 			exit(f->R.rdi);	// 프로세스 종료
 			break;
 		case SYS_FORK:
+			f->R.rax = fork(f->R.rdi);
 			break;
 		case SYS_EXEC:
+			f->R.rax = exec(f->R.rdi);
 			break;
 		case SYS_CREATE:
 			f->R.rax = create(f->R.rdi, f->R.rsi);
@@ -125,7 +130,8 @@ void exit(int status){
 int write (int fd, const void *buffer, unsigned size) {
 	check_addr(buffer);
 
-	if (fd > 64 || size == 0){
+	// fd가 0은 read용이다. 따라서 fd가 0일 때도 막아야 함.
+	if (fd > 64 || size == 0 || fd == 0){
 		exit(-1);
 	}
 	// fd가 1이면 표준 출력
@@ -191,7 +197,7 @@ int read(int fd, void *buffer, unsigned size){
 	check_addr(buffer);
 	
 	uint8_t *buff = buffer;
-	if (fd > 64){
+	if (fd > 64 || fd == 1){
 		exit(-1);
 	}
 
@@ -236,4 +242,22 @@ unsigned tell(int fd){
 
 	struct file *find_f = find_file(fd);
 	return file_tell(find_f);
+}
+
+pid_t fork(const char *thread_name){
+
+}
+
+int exec(const char *cmd_line){
+	char *copy = palloc_get_page(PAL_ZERO);
+	strlcpy(copy, cmd_line, PGSIZE);
+	int process_fail = process_exec(copy);
+	if (process_fail < 0){
+		return -1;
+	}
+	return NULL;
+}
+
+int wait(pid_t pid){
+	// return process_wait(pid);
 }
