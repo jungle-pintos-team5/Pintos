@@ -111,7 +111,7 @@ process_fork (const char *name, struct intr_frame *if_ UNUSED) {
 	copy_if->R.r14 = parent_if->R.r14;
 	copy_if->R.r15 = parent_if->R.r15;
 	
-	tid_t tid = thread_create (name, PRI_DEFAULT, __do_fork, cur); // 여기서 터짐
+	tid_t tid = thread_create (name, PRI_DEFAULT, __do_fork, cur);
 
 	struct thread *child = get_child_tid(tid);
 
