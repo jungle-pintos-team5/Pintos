@@ -235,7 +235,7 @@ thread_create (const char *name, int priority,
 	t->tf.ss = SEL_KDSEG;
 	t->tf.cs = SEL_KCSEG;
 	t->tf.eflags = FLAG_IF;
-
+	
 	/* Add to run queue. */
 	thread_unblock (t);
 	/* 현재와 가장 높은 우선순위 비교후 현재보다 우선순위가 높다면 양보 */

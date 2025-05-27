@@ -76,7 +76,7 @@ syscall_handler (struct intr_frame *f UNUSED) {
 			exit(f->R.rdi);	// 프로세스 종료
 			break;
 		case SYS_FORK:
-			f->R.rax = fork(f->R.rdi);
+			f->R.rax = sys_fork(f->R.rdi, f);
 			break;
 		case SYS_EXEC:
 			f->R.rax = exec(f->R.rdi);
@@ -244,13 +244,14 @@ unsigned tell(int fd){
 	return file_tell(find_f);
 }
 
-pid_t fork(const char *thread_name){
-
+pid_t sys_fork(const char *thread_name, struct intr_frame *parent_if){
+	return process_fork(thread_name, parent_if);
 }
 
 int exec(const char *cmd_line){
 	char *copy = palloc_get_page(PAL_ZERO);
-	strlcpy(copy, cmd_line, PGSIZE);
+	// strlcpy(copy, cmd_line, PGSIZE);
+	memcpy(copy,cmd_line,strlen(cmd_line)+1);
 	int process_fail = process_exec(copy);
 	if (process_fail < 0){
 		return -1;

@@ -79,13 +79,45 @@ initd (void *f_name) {
 	NOT_REACHED ();
 }
 
+struct thread *get_child_tid(tid_t child_tid){
+	struct thread *cur = thread_current();
+	struct thread *child_thread = NULL;
+
+	for(struct list_elem *i = list_begin(&cur->child_list); i != list_end(&cur->child_list); i = i->next){
+		struct thread *find_child_t = list_entry(i, struct thread, child_elem);
+		if(find_child_t->tid == child_tid){
+			child_thread = find_child_t;
+			break;
+		}
+	}
+	return child_thread;
+}
+
 /* Clones the current process as `name`. Returns the new process's thread id, or
  * TID_ERROR if the thread cannot be created. */
 tid_t
 process_fork (const char *name, struct intr_frame *if_ UNUSED) {
 	/* Clone current thread to new thread.*/
-	return thread_create (name,
-			PRI_DEFAULT, __do_fork, thread_current ());
+	struct thread *cur = thread_current();
+	struct intr_frame *parent_if = if_;
+	struct intr_frame *copy_if = &cur->parent_if;
+
+	// rbx, rsp, rbp, r12 ~ r15까지의 레지스터 값들을 copy 뜹니다.
+	copy_if->R.rbx = parent_if->R.rbx;
+	copy_if->rsp = parent_if->rsp;
+	copy_if->R.rbp = parent_if->R.rbp;
+	copy_if->R.r12 = parent_if->R.r12;
+	copy_if->R.r13 = parent_if->R.r13;
+	copy_if->R.r14 = parent_if->R.r14;
+	copy_if->R.r15 = parent_if->R.r15;
+	
+	tid_t tid = thread_create (name, PRI_DEFAULT, __do_fork, cur); // 여기서 터짐
+
+	struct thread *child = get_child_tid(tid);
+
+	// sema_down(&child->fork_sema);
+
+	return tid;
 }
 
 #ifndef VM
@@ -100,21 +132,27 @@ duplicate_pte (uint64_t *pte, void *va, void *aux) {
 	bool writable;
 
 	/* 1. TODO: If the parent_page is kernel page, then return immediately. */
+	if(is_kernel_vaddr(va)){
+		return true;
+	}
 
 	/* 2. Resolve VA from the parent's page map level 4. */
 	parent_page = pml4_get_page (parent->pml4, va);
 
 	/* 3. TODO: Allocate new PAL_USER page for the child and set result to
 	 *    TODO: NEWPAGE. */
+	newpage = palloc_get_page(PAL_USER | PAL_ZERO);
 
 	/* 4. TODO: Duplicate parent's page to the new page and
 	 *    TODO: check whether parent's page is writable or not (set WRITABLE
 	 *    TODO: according to the result). */
+	memcpy(newpage, parent_page, PGSIZE);
 
 	/* 5. Add new page to child's page table at address VA with WRITABLE
 	 *    permission. */
 	if (!pml4_set_page (current->pml4, va, newpage, writable)) {
 		/* 6. TODO: if fail to insert page, do error handling. */
+		return false;
 	}
 	return true;
 }
@@ -138,8 +176,9 @@ __do_fork (void *aux) {
 
 	/* 2. Duplicate PT */
 	current->pml4 = pml4_create();
-	if (current->pml4 == NULL)
+	if (current->pml4 == NULL){
 		goto error;
+	}		
 
 	process_activate (current);
 #ifdef VM
@@ -147,8 +186,10 @@ __do_fork (void *aux) {
 	if (!supplemental_page_table_copy (&current->spt, &parent->spt))
 		goto error;
 #else
-	if (!pml4_for_each (parent->pml4, duplicate_pte, parent))
+	if (!pml4_for_each (parent->pml4, duplicate_pte, parent)){
 		goto error;
+	}
+	
 #endif
 
 	/* TODO: Your code goes here.
@@ -265,6 +306,7 @@ process_wait (tid_t child_tid UNUSED) {
 	/* XXX: Hint) The pintos exit if process_wait (initd), we recommend you
 	 * XXX:       to add infinite loop here before
 	 * XXX:       implementing the process_wait. */
+
 	while (1){
 	
 	}

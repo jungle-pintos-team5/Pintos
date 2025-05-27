@@ -17,7 +17,7 @@ void close(int fd);
 void seek(int fd, unsigned position);
 unsigned tell(int fd);
 int filesize(int fd);
-pid_t fork(const char *thread_name);
+pid_t sys_fork(const char *thread_name, struct intr_frame *parent_if);
 int exec(const char *cmd_line);
 int wait(pid_t pid);
 
