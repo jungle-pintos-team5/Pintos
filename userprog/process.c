@@ -113,7 +113,7 @@ process_fork (const char *name, struct intr_frame *if_ UNUSED) {
 	
 	tid_t tid = thread_create (name, PRI_DEFAULT, __do_fork, cur);
 
-	struct thread *child = get_child_tid(tid);
+	struct thread *child = get_child_tid(tid); // 이거 통과되는 지 확인해봐야 함...
 
 	// sema_down(&child->fork_sema);
 

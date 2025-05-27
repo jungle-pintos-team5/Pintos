@@ -223,7 +223,11 @@ thread_create (const char *name, int priority,
 
 	/* Initialize thread. */
 	init_thread (t, name, priority);
-	tid = t->tid = allocate_tid ();
+	tid = t->tid = allocate_tid (); // 스레드 생성하고 tid까지 할당??
+
+	#ifdef USERPROG
+	list_push_back(&thread_current()->child_list, &t->child_elem);
+	#endif
 
 	/* Call the kernel_thread if it scheduled.
 	 * Note) rdi is 1st argument, and rsi is 2nd argument. */
@@ -239,8 +243,9 @@ thread_create (const char *name, int priority,
 	/* Add to run queue. */
 	thread_unblock (t);
 	/* 현재와 가장 높은 우선순위 비교후 현재보다 우선순위가 높다면 양보 */
-	if(t->priority > thread_current()->priority)
-	thread_yield();
+	if(t->priority > thread_current()->priority){
+		thread_yield();
+	}
 
 	return tid;
 }
@@ -506,6 +511,8 @@ init_thread (struct thread *t, const char *name, int priority) {
 	/* MLFQ : nice, recent_cpu 초기화 */
 	t->niceness = NICE_DEFAULT;
     t->recent_cpu = RECENT_CPU_DEFAULT;
+
+	list_init(&t->child_list);
 }
 
 /* Chooses and returns the next thread to be scheduled.  Should
