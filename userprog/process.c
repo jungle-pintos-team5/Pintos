@@ -113,7 +113,7 @@ process_fork (const char *name, struct intr_frame *if_ UNUSED) {
 	
 	tid_t tid = thread_create (name, PRI_DEFAULT, __do_fork, cur);
 
-	struct thread *child = get_child_tid(tid); // 이거 통과되는 지 확인해봐야 함...
+	struct thread *child = get_child_tid(tid); 
 
 	// sema_down(&child->fork_sema);
 
@@ -197,6 +197,12 @@ __do_fork (void *aux) {
 	 * TODO:       in include/filesys/file.h. Note that parent should not return
 	 * TODO:       from the fork() until this function successfully duplicates
 	 * TODO:       the resources of parent.*/
+	for (int i=0; i < parent->next_fd; i++){
+		if(parent->fdt[i] != NULL){
+			current->fdt[i] = parent->fdt[i];
+		}
+	}
+	current->next_fd = parent->next_fd;
 
 	process_init ();
 
